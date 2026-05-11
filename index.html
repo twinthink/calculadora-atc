@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATC Calculator v2 — TwinThink</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #2a2a2a;
+    --accent: #e8ff00;
+    --accent2: #00ff88;
+    --danger: #ff4444;
+    --warning: #ffaa00;
+    --text: #f0f0f0;
+    --text2: #888888;
+    --text3: #555555;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; }
+  .badge { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+
+  h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.02em; margin-bottom: 4px; }
+  h1 span { color: var(--accent); font-weight: 600; }
+  .subtitle { font-size: 12px; color: var(--text2); margin-bottom: 28px; }
+
+  .section-label {
+    font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.15em; margin: 20px 0 8px;
+  }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
+
+  .field {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; transition: border-color 0.2s;
+  }
+  .field:focus-within { border-color: var(--accent); }
+  .field label { display: block; font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+  .field select, .field input {
+    width: 100%; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  }
+  .field select option { background: var(--surface2); }
+  .field input::placeholder { color: var(--text3); }
+  .field .hint { font-size: 10px; color: var(--text3); margin-top: 3px; font-family: 'DM Mono', monospace; }
+
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .toggle-btn {
+    flex: 1; min-width: 80px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 8px; color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+
+  .toggle-switch {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 10px; cursor: pointer;
+  }
+  .toggle-switch-label { font-size: 13px; color: var(--text2); }
+  .toggle-switch-label span { display: block; font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .switch { width: 40px; height: 22px; background: var(--border); border-radius: 11px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .switch::after { content: ''; position: absolute; width: 16px; height: 16px; background: var(--text3); border-radius: 50%; top: 3px; left: 3px; transition: all 0.2s; }
+  .toggle-switch.active .switch { background: var(--accent); }
+  .toggle-switch.active .switch::after { left: 21px; background: #000; }
+
+  .slider-field { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+  .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .slider-field label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+  .slider-value { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--accent); font-weight: 500; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+  .calc-btn {
+    width: 100%; background: var(--accent); border: none; border-radius: 10px;
+    padding: 15px; color: #000; font-family: 'DM Sans', sans-serif; font-size: 15px;
+    font-weight: 700; cursor: pointer; margin-top: 20px; transition: opacity 0.2s, transform 0.1s;
+  }
+  .calc-btn:hover { opacity: 0.9; }
+  .calc-btn:active { transform: scale(0.99); }
+
+  .results { display: none; margin-top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .results.show { display: block; }
+  .results-header { background: var(--surface2); padding: 12px 16px; font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); text-transform: uppercase; letter-spacing: 0.12em; border-bottom: 1px solid var(--border); }
+
+  .result-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--border); }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { font-size: 12px; color: var(--text2); }
+  .result-value { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); }
+  .result-value.accent { color: var(--accent); }
+  .result-value.positive { color: var(--accent2); }
+  .result-value.negative { color: var(--danger); }
+  .result-value.warning { color: var(--warning); }
+
+  .result-row.total { background: var(--surface2); padding: 14px 16px; }
+  .result-row.total .result-label { font-weight: 600; color: var(--text); font-size: 13px; }
+  .result-row.total .result-value { font-size: 17px; }
+
+  .result-row.recovery { background: rgba(0,255,136,0.05); }
+
+  .tags { padding: 12px 16px; display: flex; gap: 6px; flex-wrap: wrap; border-top: 1px solid var(--border); }
+  .tag { font-size: 10px; font-family: 'DM Mono', monospace; background: var(--surface2); color: var(--text3); padding: 3px 7px; border-radius: 4px; }
+
+  .copy-btn {
+    width: 100%; background: transparent; border: 1px solid var(--border); border-radius: 10px;
+    padding: 11px; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px;
+    cursor: pointer; margin-top: 10px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); }
+
+  @media (max-width: 400px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">TwinThink ATC</div>
+  <div class="badge">Calculadora v2.0</div>
+</div>
+
+<h1>Coste de<br><span>Incidencia</span></h1>
+<p class="subtitle">Rellena los datos del pedido y obtén el desglose completo de costes al instante.</p>
+
+<!-- DATOS DEL PEDIDO -->
+<div class="section-label">Datos del pedido</div>
+
+<div class="grid">
+  <div class="field">
+    <label>SKU / Modelo</label>
+    <select id="sku" onchange="actualizarFOB()">
+      <option value="">Seleccionar...</option>
+      <option value="EMD001">EMD.001 — 4P Slim (19,3 kg)</option>
+      <option value="SYN007">SYN.007 — 2P (31,75 kg)</option>
+      <option value="SYN010">SYN.010 — 4P (34,2 kg)</option>
+      <option value="SYN011">SYN.011 — 6P Palet (47,4 kg)</option>
+      <option value="EMD003">EMD.003 — 12P Palet (46,85 kg)</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Marketplace</label>
+    <select id="marketplace">
+      <option value="">Seleccionar...</option>
+      <option value="amazon_es">Amazon ES</option>
+      <option value="amazon_it">Amazon IT</option>
+      <option value="amazon_pt">Amazon PT</option>
+      <option value="amazon_fr">Amazon FR</option>
+      <option value="amazon_de">Amazon DE</option>
+      <option value="amazon_uk">Amazon UK</option>
+      <option value="makro">Makro</option>
+      <option value="leroy">Leroy Merlin</option>
+      <option value="brico">Brico / Bricodepot</option>
+      <option value="manomano">ManoMano</option>
+      <option value="bol">Bol.com</option>
+      <option value="wayfair">Wayfair</option>
+      <option value="octopia">Octopia</option>
+      <option value="shopify">Shopify / Web</option>
+      <option value="otro">Otro</option>
+    </select>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="field">
+    <label>Provincia destino</label>
+    <select id="provincia">
+      <option value="">Seleccionar...</option>
+      <optgroup label="España">
+        <option value="9.96">Castellón</option>
+        <option value="10.08">Valencia</option>
+        <option value="10.55">Alicante / Tarragona</option>
+        <option value="10.98">Albacete / Barcelona / Murcia / Zaragoza / Lleida</option>
+        <option value="11.58">Cuenca / Girona / Guadalajara / Huesca / Madrid / Soria / Teruel</option>
+        <option value="11.99">Almería / Ávila / Burgos / C. Real / Jaén / La Rioja / Navarra / Segovia / Toledo</option>
+        <option value="12.23">Álava / Córdoba / Gipuzkoa / Granada / Málaga / Palencia / Salamanca / Sevilla / Valladolid / Vizcaya</option>
+        <option value="13.01">Badajoz / Cáceres / Cádiz / Cantabria / León / Zamora</option>
+        <option value="13.62">Asturias / Huelva / Lugo / Orense</option>
+        <option value="14.33">A Coruña / Pontevedra</option>
+        <option value="20.39">Gran Canaria / Tenerife</option>
+        <option value="43.82">Lanzarote / Fuerteventura / La Gomera / El Hierro / La Palma</option>
+      </optgroup>
+      <optgroup label="Portugal">
+        <option value="15.70">Lisboa / Coimbra</option>
+        <option value="16.41">Oporto</option>
+        <option value="21.05">Zona 2</option>
+      </optgroup>
+      <optgroup label="Otros mercados">
+        <option value="0">Italia (Montelog — tarifa aparte)</option>
+        <option value="0">Francia (Castres — tarifa aparte)</option>
+        <option value="0">Reino Unido (MCF — tarifa aparte)</option>
+      </optgroup>
+    </select>
+  </div>
+  <div class="field">
+    <label>PVP venta (€ con IVA)</label>
+    <input type="number" id="pvp" placeholder="0.00" step="0.01" min="0">
+  </div>
+</div>
+
+<!-- TIPO CLIENTE -->
+<div class="section-label">Tipo de cliente</div>
+<div class="toggle-row">
+  <button class="toggle-btn" onclick="setCliente('b2c')">👤 B2C (particular)</button>
+  <button class="toggle-btn active" onclick="setCliente('b2b')">🏢 B2B (empresa con NIF)</button>
+</div>
+
+<!-- COSTE DEL PRODUCTO -->
+<div class="section-label">Coste del producto</div>
+
+<div class="grid">
+  <div class="field">
+    <label>FOB fábrica (€/ud)</label>
+    <input type="number" id="fob" placeholder="0.00" step="0.01">
+    <div class="hint" id="fob-hint">Precio real MASYOUNGER (factura MYDR-202506)</div>
+  </div>
+  <div class="field">
+    <label>Flete China → ES (€/ud)</label>
+    <input type="number" id="flete" placeholder="8.00" step="0.01" value="8">
+    <div class="hint">Estimación aproximada</div>
+  </div>
+</div>
+
+<!-- TIPO DE INCIDENCIA -->
+<div class="section-label">Tipo de incidencia</div>
+<div class="toggle-row">
+  <button class="toggle-btn active" onclick="setTipo('retraso')">⏱ Retraso</button>
+  <button class="toggle-btn" onclick="setTipo('dano')">📦 Daño</button>
+  <button class="toggle-btn" onclick="setTipo('perdida')">❌ Pérdida</button>
+  <button class="toggle-btn" onclick="setTipo('defecto')">🔧 Defecto</button>
+</div>
+
+<!-- RESOLUCIÓN -->
+<div class="section-label">Resolución</div>
+<div class="toggle-row">
+  <button class="toggle-btn active" onclick="setResolucion('reenvio')">🔄 Reenvío</button>
+  <button class="toggle-btn" onclick="setResolucion('reembolso')">💶 Reembolso</button>
+  <button class="toggle-btn" onclick="setResolucion('sin_accion')">✓ Sin acción</button>
+</div>
+
+<!-- PORCENTAJE REEMBOLSO -->
+<div id="slider-reembolso" class="slider-field" style="display:none">
+  <div class="slider-header">
+    <label>Porcentaje de reembolso</label>
+    <span class="slider-value" id="pct-value">100%</span>
+  </div>
+  <input type="range" id="pct-reembolso" min="0" max="100" step="5" value="100"
+    oninput="document.getElementById('pct-value').textContent = this.value + '%'">
+</div>
+
+<!-- DEVOLUCIÓN FÍSICA -->
+<div class="section-label">¿Hay devolución física del producto?</div>
+<div class="toggle-switch" id="toggle-devolucion" onclick="toggleDevolucion()">
+  <div class="toggle-switch-label">
+    Devolución física
+    <span>El cliente devuelve el producto</span>
+  </div>
+  <div class="switch"></div>
+</div>
+
+<div id="devolucion-options" style="display:none">
+  <div class="section-label">Canal de devolución</div>
+  <div class="toggle-row">
+    <button class="toggle-btn active" onclick="setDevolucionCanal('amazon')">📦 Etiqueta Amazon</button>
+    <button class="toggle-btn" onclick="setDevolucionCanal('ontime')">🚚 Recogida Ontime</button>
+    <button class="toggle-btn" onclick="setDevolucionCanal('cliente')">👤 Cuenta cliente</button>
+  </div>
+</div>
+
+<!-- RESPONSABLE -->
+<div class="section-label">Responsable del problema</div>
+<div class="grid">
+  <div class="field">
+    <label>Atribuir a</label>
+    <select id="responsable">
+      <option value="ontime">Ontime</option>
+      <option value="oceges">OCEGES</option>
+      <option value="montelog">Montelog</option>
+      <option value="masyounger">MASYOUNGER</option>
+      <option value="cliente">Cliente</option>
+      <option value="indeterminado">Indeterminado</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Unidades afectadas</label>
+    <input type="number" id="unidades" placeholder="1" min="1" value="1">
+  </div>
+</div>
+
+<button class="calc-btn" onclick="calcular()">→ Calcular coste total</button>
+
+<!-- RESULTADOS -->
+<div class="results" id="results">
+  <div class="results-header">Desglose de costes</div>
+
+  <div class="result-row">
+    <span class="result-label">SKU</span>
+    <span class="result-value accent" id="r-sku">—</span>
+  </div>
+  <div class="result-row">
+    <span class="result-label">PVP sin IVA</span>
+    <span class="result-value" id="r-pvp-neto">—</span>
+  </div>
+  <div class="result-row">
+    <span class="result-label">Coste producto (FOB + flete + factor)</span>
+    <span class="result-value negative" id="r-coste-producto">—</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="result-row">
+    <span class="result-label">Coste envío original</span>
+    <span class="result-value negative" id="r-envio">—</span>
+  </div>
+  <div class="result-row" id="row-reenvio" style="display:none">
+    <span class="result-label">Coste reenvío (nueva unidad)</span>
+    <span class="result-value negative" id="r-reenvio">—</span>
+  </div>
+  <div class="result-row" id="row-reembolso" style="display:none">
+    <span class="result-label">Reembolso al cliente</span>
+    <span class="result-value negative" id="r-reembolso">—</span>
+  </div>
+  <div class="result-row">
+    <span class="result-label">Comisión marketplace perdida</span>
+    <span class="result-value negative" id="r-comision">—</span>
+  </div>
+  <div class="result-row" id="row-devolucion" style="display:none">
+    <span class="result-label">Coste etiqueta devolución</span>
+    <span class="result-value negative" id="r-devolucion">—</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="result-row total">
+    <span class="result-label">💸 Coste total incidencia</span>
+    <span class="result-value negative" id="r-total">—</span>
+  </div>
+
+  <div class="result-row recovery">
+    <span class="result-label">⚖️ Cap LCTTM reclamable (art. 57.1)</span>
+    <span class="result-value positive" id="r-lcttm">—</span>
+  </div>
+  <div class="result-row recovery">
+    <span class="result-label">💰 Coste neto tras reclamación</span>
+    <span class="result-value" id="r-neto">—</span>
+  </div>
+
+  <div class="tags">
+    <span class="tag" id="t-responsable">—</span>
+    <span class="tag" id="t-tipo">—</span>
+    <span class="tag" id="t-resolucion">—</span>
+    <span class="tag" id="t-cliente">—</span>
+    <span class="tag" id="t-iva">—</span>
+  </div>
+</div>
+
+<button class="copy-btn" id="copy-btn" onclick="copiarClickUp()" style="display:none">
+  📋 Copiar resumen para ClickUp
+</button>
+
+<script>
+const SKUS = {
+  EMD001: { nombre: 'EMD.001', peso: 19.30, tasable: 40, factor50: false, fob_est: 29.0 },
+  SYN007: { nombre: 'SYN.007', peso: 31.75, tasable: 40, factor50: false, fob_est: 43.4 },
+  SYN010: { nombre: 'SYN.010', peso: 34.20, tasable: 40, factor50: false, fob_est: 45.4 },
+  SYN011: { nombre: 'SYN.011', peso: 47.40, tasable: 50, factor50: true,  fob_est: 61.4 },
+  EMD003: { nombre: 'EMD.003', peso: 46.85, tasable: 50, factor50: true,  fob_est: 73.4 },
+};
+
+const COMISIONES = {
+  amazon_es: 0.15, amazon_it: 0.15, amazon_pt: 0.15,
+  amazon_fr: 0.15, amazon_de: 0.15, amazon_uk: 0.15,
+  makro: 0.12, leroy: 0.18, brico: 0.15, manomano: 0.15,
+  bol: 0.15, wayfair: 0.15, octopia: 0.15,
+  shopify: 0.03, otro: 0.10
+};
+
+const IVA = { amazon_es: 0.21, amazon_pt: 0.23, amazon_it: 0.22, amazon_fr: 0.20, amazon_de: 0.19, amazon_uk: 0.20, makro: 0.21, leroy: 0.21, brico: 0.21, manomano: 0.21, bol: 0.21, wayfair: 0.21, octopia: 0.21, shopify: 0.21, otro: 0.21 };
+const LANDED_FACTOR = 1.35;
+
+let tipoActual = 'retraso';
+let resolucionActual = 'reenvio';
+let clienteActual = 'b2b';
+let devolucionActiva = false;
+let devolucionCanal = 'amazon';
+
+function setTipo(t) {
+  tipoActual = t;
+  document.querySelectorAll('#tipo-row .toggle-btn').forEach(b => b.classList.remove('active'));
+}
+
+function setResolucion(r) {
+  resolucionActual = r;
+  document.querySelectorAll('#resolucion-row .toggle-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('slider-reembolso').style.display = r === 'reembolso' ? 'block' : 'none';
+  // Highlight active
+  const btns = document.querySelectorAll('.toggle-row');
+  btns.forEach(row => {
+    row.querySelectorAll('.toggle-btn').forEach(b => {
+      if (['🔄 Reenvío','💶 Reembolso','✓ Sin acción'].some(x => b.textContent.includes(x.replace('🔄 ','').replace('💶 ','').replace('✓ ','')))) {
+        b.classList.toggle('active', 
+          (r==='reenvio' && b.textContent.includes('Reenvío')) ||
+          (r==='reembolso' && b.textContent.includes('Reembolso')) ||
+          (r==='sin_accion' && b.textContent.includes('Sin acción'))
+        );
+      }
+    });
+  });
+}
+
+function setCliente(c) {
+  clienteActual = c;
+  document.querySelectorAll('.toggle-btn').forEach(b => {
+    if (b.textContent.includes('B2C') || b.textContent.includes('B2B') || b.textContent.includes('No sé')) {
+      b.classList.toggle('active',
+        (c==='b2c' && b.textContent.includes('B2C')) ||
+        (c==='b2b' && b.textContent.includes('B2B')) ||
+        (c==='desconocido' && b.textContent.includes('No sé'))
+      );
+    }
+  });
+}
+
+function toggleDevolucion() {
+  devolucionActiva = !devolucionActiva;
+  document.getElementById('toggle-devolucion').classList.toggle('active', devolucionActiva);
+  document.getElementById('devolucion-options').style.display = devolucionActiva ? 'block' : 'none';
+}
+
+function setDevolucionCanal(c) {
+  devolucionCanal = c;
+  document.querySelectorAll('#devolucion-options .toggle-btn').forEach(b => {
+    b.classList.toggle('active',
+      (c==='amazon' && b.textContent.includes('Amazon')) ||
+      (c==='ontime' && b.textContent.includes('Ontime')) ||
+      (c==='cliente' && b.textContent.includes('cliente'))
+    );
+  });
+}
+
+function actualizarFOB() {
+  const skuKey = document.getElementById('sku').value;
+  if (skuKey && SKUS[skuKey]) {
+    document.getElementById('fob').value = SKUS[skuKey].fob_est;
+    document.getElementById('fob-hint').textContent = 'Precio real MASYOUNGER (factura MYDR-202506)';
+  }
+}
+
+function fmt(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+
+function costeEtiquetaDevolucion(skuKey, canal) {
+  if (canal === 'cliente') return 0;
+  if (canal === 'amazon') {
+    // Amazon cobra la etiqueta prepagada al vendedor — estimación por tramo de peso
+    const tasable = SKUS[skuKey]?.tasable || 40;
+    return tasable === 40 ? 8.50 : 11.00;
+  }
+  if (canal === 'ontime') {
+    // Retornos Ontime = mismo precio que distribución
+    const prov = parseFloat(document.getElementById('provincia').value) || 11.58;
+    return SKUS[skuKey]?.factor50 ? prov * 1.18 : prov;
+  }
+  return 0;
+}
+
+function calcular() {
+  const skuKey = document.getElementById('sku').value;
+  const marketplace = document.getElementById('marketplace').value;
+  const provinciaVal = parseFloat(document.getElementById('provincia').value);
+  const pvpBruto = parseFloat(document.getElementById('pvp').value) || 0;
+  const fob = parseFloat(document.getElementById('fob').value) || 0;
+  const flete = parseFloat(document.getElementById('flete').value) || 8;
+  const unidades = parseInt(document.getElementById('unidades').value) || 1;
+  const pctReembolso = parseInt(document.getElementById('pct-reembolso').value) / 100;
+
+  if (!skuKey || !marketplace || isNaN(provinciaVal)) {
+    alert('Por favor completa SKU, Marketplace y Provincia.');
+    return;
+  }
+
+  const sku = SKUS[skuKey];
+  const ivaRate = IVA[marketplace] || 0.21;
+  const pvpNeto = clienteActual === 'b2b' ? pvpBruto / (1 + ivaRate) : pvpBruto;
+  const comision = COMISIONES[marketplace] || 0.10;
+  const tarifaBase = provinciaVal;
+  const tarifaEnvio = sku.factor50 ? tarifaBase * 1.18 : tarifaBase;
+  const lcttm = sku.peso * 6.67;
+
+  // Coste producto (FOB + flete + factor importación)
+  const costeProducto = (fob + flete) * LANDED_FACTOR;
+
+  // Comisión perdida (sobre PVP neto)
+  const comisionPerdida = pvpNeto * comision;
+
+  // Reembolso
+  let reembolso = 0;
+  if (resolucionActual === 'reembolso') {
+    reembolso = pvpNeto * pctReembolso * unidades;
+  }
+
+  // Reenvío
+  let costeReenvio = 0;
+  let costeProductoReenvio = 0;
+  if (resolucionActual === 'reenvio') {
+    costeReenvio = tarifaEnvio * unidades;
+    costeProductoReenvio = costeProducto * unidades;
+  }
+
+  // Etiqueta devolución
+  let costeDevolucion = 0;
+  if (devolucionActiva) {
+    costeDevolucion = costeEtiquetaDevolucion(skuKey, devolucionCanal) * unidades;
+  }
+
+  // Total
+  const costeEnvioOriginal = tarifaEnvio * unidades;
+  const total = costeEnvioOriginal + costeReenvio + costeProductoReenvio + reembolso + comisionPerdida + costeDevolucion;
+  const neto = Math.max(0, total - lcttm);
+
+  // Mostrar
+  document.getElementById('r-sku').textContent = sku.nombre + ' × ' + unidades;
+  document.getElementById('r-pvp-neto').textContent = fmt(pvpNeto) + (clienteActual === 'b2b' ? ' (sin IVA)' : ' (con IVA)');
+  document.getElementById('r-coste-producto').textContent = fmt(costeProducto * unidades);
+  document.getElementById('r-envio').textContent = fmt(costeEnvioOriginal);
+  document.getElementById('r-comision').textContent = fmt(comisionPerdida);
+  document.getElementById('r-total').textContent = fmt(total);
+  document.getElementById('r-lcttm').textContent = fmt(lcttm);
+
+  const netoEl = document.getElementById('r-neto');
+  netoEl.textContent = fmt(neto);
+  netoEl.className = 'result-value ' + (neto < total * 0.3 ? 'positive' : neto < total * 0.6 ? 'warning' : 'negative');
+
+  // Reenvío/Reembolso rows
+  document.getElementById('row-reenvio').style.display = resolucionActual === 'reenvio' ? 'flex' : 'none';
+  document.getElementById('r-reenvio').textContent = fmt(costeReenvio + costeProductoReenvio);
+  document.getElementById('row-reembolso').style.display = resolucionActual === 'reembolso' ? 'flex' : 'none';
+  document.getElementById('r-reembolso').textContent = fmt(reembolso) + (pctReembolso < 1 ? ' (' + Math.round(pctReembolso*100) + '%)' : '');
+
+  // Devolución
+  document.getElementById('row-devolucion').style.display = devolucionActiva ? 'flex' : 'none';
+  document.getElementById('r-devolucion').textContent = fmt(costeDevolucion);
+
+  // Tags
+  document.getElementById('t-responsable').textContent = document.getElementById('responsable').value.toUpperCase();
+  document.getElementById('t-tipo').textContent = tipoActual.toUpperCase();
+  document.getElementById('t-resolucion').textContent = resolucionActual.toUpperCase();
+  document.getElementById('t-cliente').textContent = clienteActual.toUpperCase();
+  document.getElementById('t-iva').textContent = 'IVA ' + Math.round(ivaRate*100) + '%';
+
+  document.getElementById('results').classList.add('show');
+  document.getElementById('copy-btn').style.display = 'flex';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copiarClickUp() {
+  const lines = [
+    '=== COSTE INCIDENCIA ATC ===',
+    'SKU: ' + document.getElementById('r-sku').textContent,
+    'Tipo: ' + tipoActual.toUpperCase(),
+    'Resolución: ' + resolucionActual.toUpperCase(),
+    'Responsable: ' + document.getElementById('responsable').value.toUpperCase(),
+    'Cliente: ' + clienteActual.toUpperCase(),
+    '---',
+    'PVP neto: ' + document.getElementById('r-pvp-neto').textContent,
+    'Coste producto (FOB+flete+factor): ' + document.getElementById('r-coste-producto').textContent,
+    'Coste envío original: ' + document.getElementById('r-envio').textContent,
+  ];
+
+  if (resolucionActual === 'reenvio') lines.push('Coste reenvío + producto: ' + document.getElementById('r-reenvio').textContent);
+  if (resolucionActual === 'reembolso') lines.push('Reembolso cliente: ' + document.getElementById('r-reembolso').textContent);
+  if (devolucionActiva) lines.push('Etiqueta devolución: ' + document.getElementById('r-devolucion').textContent);
+
+  lines.push(
+    'Comisión marketplace: ' + document.getElementById('r-comision').textContent,
+    '---',
+    'COSTE TOTAL: ' + document.getElementById('r-total').textContent,
+    'Cap LCTTM reclamable: ' + document.getElementById('r-lcttm').textContent,
+    'COSTE NETO tras reclamación: ' + document.getElementById('r-neto').textContent,
+  );
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.innerHTML = '📋 Copiar resumen para ClickUp'; }, 2000);
+  });
+}
+
+// Init
+setResolucion('reenvio');
+setCliente('b2b');
+</script>
+</body>
+</html>

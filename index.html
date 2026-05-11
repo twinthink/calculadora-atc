@@ -227,7 +227,8 @@
   <div class="lineas-resumen" id="lineas-resumen"></div>
   <div class="result-row"><span class="result-label">Coste total producto(s)</span><span class="result-value negative" id="r-coste-producto">—</span></div>
   <div class="result-row"><span class="result-label">Coste envío original</span><span class="result-value negative" id="r-envio">—</span></div>
-  <div class="result-row" id="row-reenvio" style="display:none"><span class="result-label">Coste reenvío (nuevas unidades)</span><span class="result-value negative" id="r-reenvio">—</span></div>
+  <div class="result-row" id="row-reenvio-envio" style="display:none"><span class="result-label">Coste reenvío — envío</span><span class="result-value negative" id="r-reenvio-envio">—</span></div>
+  <div class="result-row" id="row-reenvio-producto" style="display:none"><span class="result-label">Coste reenvío — producto</span><span class="result-value negative" id="r-reenvio-producto">—</span></div>
   <div class="result-row" id="row-reembolso" style="display:none"><span class="result-label">Reembolso al cliente</span><span class="result-value negative" id="r-reembolso">—</span></div>
   <div class="result-row"><span class="result-label">Comisión marketplace perdida</span><span class="result-value negative" id="r-comision">—</span></div>
   <div class="result-row" id="row-devolucion" style="display:none"><span class="result-label">Coste etiqueta devolución</span><span class="result-value negative" id="r-devolucion">—</span></div>
@@ -390,8 +391,10 @@ function calcular(){
   const nEl=document.getElementById('r-neto');
   nEl.textContent=fmt(neto);
   nEl.className='result-value '+(neto<total*.3?'positive':neto<total*.6?'warning':'negative');
-  document.getElementById('row-reenvio').style.display=resolucion==='reenvio'?'flex':'none';
-  document.getElementById('r-reenvio').textContent=fmt(reenvio+prodReenvio);
+  document.getElementById('row-reenvio-envio').style.display=resolucion==='reenvio'?'flex':'none';
+  document.getElementById('r-reenvio-envio').textContent=fmt(reenvio);
+  document.getElementById('row-reenvio-producto').style.display=resolucion==='reenvio'?'flex':'none';
+  document.getElementById('r-reenvio-producto').textContent=fmt(prodReenvio);
   document.getElementById('row-reembolso').style.display=resolucion==='reembolso'?'flex':'none';
   document.getElementById('r-reembolso').textContent=fmt(reembolso)+(pct<1?' ('+Math.round(pct*100)+'%)':'');
   document.getElementById('row-devolucion').style.display=devActiva?'flex':'none';
@@ -409,7 +412,10 @@ function copiarClickUp(){
   const lines=['=== COSTE INCIDENCIA ATC ===','Tipo: '+tipo.toUpperCase(),'Resolución: '+resolucion.toUpperCase(),'Responsable: '+document.getElementById('responsable').value.toUpperCase(),'Cliente: '+cliente.toUpperCase(),'---','LÍNEAS DEL PEDIDO:'];
   resLineas.forEach(l=>lines.push(`  ${l.nombre} × ${l.u} ud. | PVP ${fmt(l.pvpN)} | LCTTM ${fmt(l.lcttm)}`));
   lines.push('---','Coste producto(s): '+document.getElementById('r-coste-producto').textContent,'Coste envío original: '+document.getElementById('r-envio').textContent);
-  if(resolucion==='reenvio')lines.push('Coste reenvío + producto: '+document.getElementById('r-reenvio').textContent);
+  if(resolucion==='reenvio'){
+    lines.push('Coste envío reenvío: '+document.getElementById('r-reenvio-envio').textContent);
+    lines.push('Coste producto reenvío: '+document.getElementById('r-reenvio-producto').textContent);
+  }
   if(resolucion==='reembolso')lines.push('Reembolso cliente: '+document.getElementById('r-reembolso').textContent);
   if(devActiva)lines.push('Etiqueta devolución: '+document.getElementById('r-devolucion').textContent);
   lines.push('Comisión marketplace: '+document.getElementById('r-comision').textContent,'---','COSTE TOTAL: '+document.getElementById('r-total').textContent,'Cap LCTTM reclamable: '+document.getElementById('r-lcttm').textContent,'COSTE NETO tras reclamación: '+document.getElementById('r-neto').textContent);

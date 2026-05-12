@@ -92,7 +92,7 @@
 
 <div class="header">
   <div class="logo">TwinThink ATC</div>
-  <div class="badge">Calculadora v3.0</div>
+  <div class="badge">Calculadora v4.0</div>
 </div>
 
 <h1>Coste de<br><span>Incidencia</span></h1>
@@ -231,6 +231,7 @@
   <div class="result-row" id="row-reenvio-producto" style="display:none"><span class="result-label">Coste reenvío — producto</span><span class="result-value negative" id="r-reenvio-producto">—</span></div>
   <div class="result-row" id="row-reembolso" style="display:none"><span class="result-label">Reembolso al cliente</span><span class="result-value negative" id="r-reembolso">—</span></div>
   <div class="result-row"><span class="result-label">Comisión marketplace perdida</span><span class="result-value negative" id="r-comision">—</span></div>
+  <div class="result-row" id="row-cuota" style="display:none"><span class="result-label">Cuota fija marketplace (mensual)</span><span class="result-value negative" id="r-cuota">—</span></div>
   <div class="result-row" id="row-devolucion" style="display:none"><span class="result-label">Coste etiqueta devolución</span><span class="result-value negative" id="r-devolucion">—</span></div>
   <div class="divider"></div>
   <div class="result-row total"><span class="result-label">💸 Coste total incidencia</span><span class="result-value negative" id="r-total">—</span></div>
@@ -254,8 +255,62 @@ const SKUS={
   SYN011:{nombre:'SYN.011 — 6P Palet',peso:47.40,tasable:50,factor50:true,fob:61.4},
   EMD003:{nombre:'EMD.003 — 12P Palet',peso:46.85,tasable:50,factor50:true,fob:73.4},
 };
-const COMISIONES={amazon_es:.15,amazon_it:.15,amazon_pt:.15,amazon_fr:.15,amazon_de:.15,amazon_uk:.15,makro:.12,leroy:.18,brico:.15,manomano:.15,bol:.15,wayfair:.15,octopia:.15,shopify:.03,otro:.10};
-const IVA_RATES={amazon_es:.21,amazon_pt:.23,amazon_it:.22,amazon_fr:.20,amazon_de:.19,amazon_uk:.20,makro:.21,leroy:.21,brico:.21,manomano:.21,bol:.21,wayfair:.21,octopia:.21,shopify:.21,otro:.21};
+
+// Comisiones reales verificadas por marketplace y SKU
+// Formato: { default: X, por SKU si varía }
+const COMISIONES={
+  amazon_es:{EMD001:0.1815,SYN007:0.1815,SYN010:0.1773,SYN011:0.16,EMD003:0.1815,default:0.1815},
+  amazon_it:{EMD001:0.156,SYN007:0.15,SYN010:0.1502,SYN011:0.139,EMD003:0.15,default:0.15},
+  amazon_pt:{default:0.15},
+  amazon_fr:{default:0.15},
+  amazon_de:{default:0.15},
+  amazon_uk:{default:0.15},
+  makro:{default:0.12}, // Pendiente confirmar con metro-marketplace.eu
+  leroy:{default:0.195}, // Real verificado: 19-21% según mercado
+  brico:{default:0.13}, // Real verificado: 13% fijo
+  manomano:{default:0.15}, // Estimado — cuenta sin ventas aún
+  bol:{default:0.15},
+  wayfair:{default:0.15},
+  octopia:{default:0.15},
+  shopify:{default:0.03},
+  otro:{default:0.10}
+};
+
+// Cuotas fijas mensuales por marketplace
+const CUOTAS_FIJAS={
+  leroy:39.00,
+  brico:39.99,
+};
+
+// IVA real por marketplace/país verificado
+const IVA_RATES={
+  amazon_es:0.21,
+  amazon_it:0.22,
+  amazon_pt:0.23,
+  amazon_fr:0.20,
+  amazon_de:0.19,
+  amazon_uk:0.20,
+  makro:0.21,
+  leroy:0.21,
+  brico:0.21,
+  manomano:0.21,
+  bol:0.21,
+  wayfair:0.21,
+  octopia:0.21,
+  shopify:0.21,
+  otro:0.21
+};
+
+// Tarifas Montelog IT reales verificadas desde OCEGES (sin IVA)
+const MONTELOG_IT={
+  EMD001:20.49,
+  SYN007:20.49,
+  SYN010:20.49,
+  SYN011:40.98,
+  EMD003:40.98,
+  default:20.49
+};
+
 const LANDED=1.35,TC=0.92;
 let tipo='retraso',resolucion='reenvio',cliente='b2b',devActiva=false,devCanal='amazon',lineaCount=0,resLineas=[];
 
@@ -332,17 +387,17 @@ function costeEtiqueta(skuKey){
 function calcular(){
   const mp=document.getElementById('marketplace').value;
   const prov=parseFloat(document.getElementById('provincia').value);
-  const flete=parseFloat(document.getElementById('flete').value)||8;
+  const flete=parseFloat(document.getElementById('flete').value)||8.80;
   const pct=parseInt(document.getElementById('pct-reembolso').value)/100;
   const iva=IVA_RATES[mp]||.21;
-  const com=COMISIONES[mp]||.10;
+  const mpComisiones=COMISIONES[mp]||{default:0.15};
 
   if(!mp||isNaN(prov)){alert('Completa Marketplace y Provincia.');return;}
 
   const lineas=document.querySelectorAll('.linea-pedido');
   if(!lineas.length){alert('Añade al menos un modelo.');return;}
 
-  let tProd=0,tEnvio=0,tLCTTM=0,tPVP=0;
+  let tProd=0,tEnvio=0,tLCTTM=0,tPVP=0,tComision=0;
   resLineas=[];
 
   for(const l of lineas){
@@ -354,16 +409,28 @@ function calcular(){
     if(!k)continue;
     const s=SKUS[k];
     const pvpN=cliente==='b2b'?pvpB/(1+iva):pvpB;
-    const tarifa=s.factor50?prov*1.18:prov;
+
+    // Tarifa de envío — Montelog IT si es marketplace italiano, sino Ontime
+    let tarifa;
+    if(mp==='amazon_it'||mp==='manomano'&&prov===0){
+      tarifa=MONTELOG_IT[k]||MONTELOG_IT.default;
+    } else {
+      tarifa=s.factor50?prov*1.18:prov;
+    }
+
+    // Comisión real por SKU
+    const comRate=mpComisiones[k]!==undefined?mpComisiones[k]:mpComisiones.default;
+    const comLinea=pvpN*comRate;
+
     const prod=(fob+flete)*LANDED;
     const lcttm=s.peso*6.67*u;
-    tProd+=prod*u;tEnvio+=tarifa*u;tLCTTM+=lcttm;tPVP+=pvpN*u;
-    resLineas.push({nombre:s.nombre,u,pvpN:pvpN*u,prod:prod*u,envio:tarifa*u,lcttm});
+    tProd+=prod*u;tEnvio+=tarifa*u;tLCTTM+=lcttm;tPVP+=pvpN*u;tComision+=comLinea*u;
+    resLineas.push({nombre:s.nombre,u,pvpN:pvpN*u,prod:prod*u,envio:tarifa*u,lcttm,comRate});
   }
 
   if(!resLineas.length){alert('Completa al menos un SKU.');return;}
 
-  const comTotal=tPVP*com;
+  const comisionTotal=tComision;
   let reenvio=0,reembolso=0,prodReenvio=0,devTotal=0;
   if(resolucion==='reenvio'){reenvio=tEnvio;prodReenvio=tProd;}
   else if(resolucion==='reembolso'){reembolso=tPVP*pct;}
@@ -376,16 +443,16 @@ function calcular(){
     }
   }
 
-  const total=tEnvio+reenvio+prodReenvio+reembolso+comTotal+devTotal;
+  const total=tEnvio+reenvio+prodReenvio+reembolso+comisionTotal+devTotal;
   const neto=Math.max(0,total-tLCTTM);
 
   const resEl=document.getElementById('lineas-resumen');
   resEl.innerHTML='<div style="font-size:10px;font-family:DM Mono,monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Líneas del pedido</div>';
-  resLineas.forEach(l=>resEl.innerHTML+=`<div class="linea-resumen-row"><span>${l.nombre} × ${l.u} ud.</span><span>PVP ${fmt(l.pvpN)} | LCTTM ${fmt(l.lcttm)}</span></div>`);
+  resLineas.forEach(l=>resEl.innerHTML+=`<div class="linea-resumen-row"><span>${l.nombre} × ${l.u} ud.</span><span>PVP ${fmt(l.pvpN)} | Com. ${(l.comRate*100).toFixed(1)}% | LCTTM ${fmt(l.lcttm)}</span></div>`);
 
   document.getElementById('r-coste-producto').textContent=fmt(tProd);
   document.getElementById('r-envio').textContent=fmt(tEnvio);
-  document.getElementById('r-comision').textContent=fmt(comTotal);
+  document.getElementById('r-comision').textContent=fmt(comisionTotal);
   document.getElementById('r-total').textContent=fmt(total);
   document.getElementById('r-lcttm').textContent=fmt(tLCTTM);
   const nEl=document.getElementById('r-neto');
@@ -399,6 +466,10 @@ function calcular(){
   document.getElementById('r-reembolso').textContent=fmt(reembolso)+(pct<1?' ('+Math.round(pct*100)+'%)':'');
   document.getElementById('row-devolucion').style.display=devActiva?'flex':'none';
   document.getElementById('r-devolucion').textContent=fmt(devTotal);
+  // Cuota fija marketplace
+  const cuota=CUOTAS_FIJAS[mp]||0;
+  document.getElementById('row-cuota').style.display=cuota>0?'flex':'none';
+  document.getElementById('r-cuota').textContent=cuota>0?fmt(cuota)+' (informativo)':'—';
   document.getElementById('t-responsable').textContent=document.getElementById('responsable').value.toUpperCase();
   document.getElementById('t-tipo').textContent=tipo.toUpperCase();
   document.getElementById('t-resolucion').textContent=resolucion.toUpperCase();

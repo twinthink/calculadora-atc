@@ -178,6 +178,30 @@
     <option value="SARDEGNA">Cerdeña</option>
   </select>
 </div>
+<div id="extrasIT_wrap" style="display:none;
+  margin-top:8px;padding:8px;
+  background:#f8f9fc;border-radius:6px">
+  <label style="font-size:12px;color:#666;
+    display:block;margin-bottom:6px">
+    <b>Extras palet (marcar los que apliquen):</b>
+  </label>
+  <label style="font-size:12px;display:block">
+    <input type="checkbox" id="extra_palet" value="7">
+    Palet de madera — 7,00€
+  </label>
+  <label style="font-size:12px;display:block">
+    <input type="checkbox" id="extra_seguro" value="2">
+    Seguro por expedición — 2,00€
+  </label>
+  <label style="font-size:12px;display:block">
+    <input type="checkbox" id="extra_aviso" value="2">
+    Aviso telefónico previo — 2,00€
+  </label>
+  <label style="font-size:12px;display:block">
+    <input type="checkbox" id="extra_taillift" value="8">
+    Tail lift (elevador) — 8,00€
+  </label>
+</div>
 <script>
 // Mostrar selector región IT solo cuando destino es Italia
 // y SKU es SYN011 o EMD003
@@ -192,6 +216,10 @@ document.addEventListener('change', function(){
     dest.options[dest.selectedIndex]
     .text.includes('Italia');
   wrap.style.display=(esPalet&&esIT)?'block':'none';
+  const wrapExtras=document.getElementById(
+    'extrasIT_wrap');
+  if(wrapExtras) wrapExtras.style.display=
+    (esPalet&&esIT)?'block':'none';
 });
 </script>
   </div>
@@ -381,6 +409,14 @@ const MONTELOG_PALLET={
   SARDEGNA:[74.16,108.25,176.93],
   default:[56.01,76.83,114.61]
 };
+
+// Costes adicionales por expedición en palet IT
+const MONTELOG_PALLET_EXTRAS={
+  palet: 7.00,      // Palet de madera 100x120
+  seguro: 2.00,     // Seguro por expedición
+  avisoTel: 2.00,   // Aviso telefónico previo
+  tailLift: 8.00    // Elevador hidráulico
+};
 // Índice columna: 0=H≤60cm, 1=H≤80cm, 2=H≤160cm
 // SYN.011 (47.4kg) → columna 1 (H≤80cm/≤300kg)
 // EMD.003 (46.85kg) → columna 1 (H≤80cm/≤300kg)
@@ -490,7 +526,13 @@ function calcular(){
       if((k==='SYN011'||k==='EMD003')&&window._regionIT){
         const regData=MONTELOG_PALLET[window._regionIT]
           ||MONTELOG_PALLET.default;
-        tarifa=regData[1]; // columna H≤80cm para ambos SKUs
+        let extrasIT=0;
+        ['extra_palet','extra_seguro',
+         'extra_aviso','extra_taillift'].forEach(id=>{
+          const el=document.getElementById(id);
+          if(el&&el.checked) extrasIT+=parseFloat(el.value);
+        });
+        tarifa=regData[1]+extrasIT;
       } else {
         tarifa=MONTELOG_IT[k]||MONTELOG_IT.default;
       }

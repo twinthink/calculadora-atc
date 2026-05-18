@@ -201,6 +201,42 @@
     <input type="checkbox" id="extra_taillift" value="8">
     Tail lift (elevador) — 8,00€
   </label>
+  <label style="font-size:12px;display:block;
+    margin-top:8px">
+    <input type="checkbox" id="extra_zonaEsp"
+      onchange="toggleZonaEsp(this.checked)">
+    Zona especial / isla — ver suplemento
+  </label>
+  <select id="select_zonaEsp"
+    style="display:none;margin-top:4px;
+    font-size:12px;width:100%"
+    onchange="window._zonaEspIT=this.value">
+    <option value="">— Seleccionar zona —</option>
+    <option value="venezia_centro">
+      Venecia centro histórico</option>
+    <option value="venezia_islas">
+      Venecia islas (Murano, Lido...)</option>
+    <option value="venezia_islas_remotas">
+      Venecia islas remotas (Burano...)</option>
+    <option value="islas_campania">
+      Islas Campania (Ischia, Procida)</option>
+    <option value="capri">Capri</option>
+    <option value="portofino">Portofino</option>
+    <option value="elba">Isla de Elba</option>
+    <option value="giglio_capraia">
+      Giglio / Capraia</option>
+    <option value="islas_sicilia">
+      Islas Sicilia (Eolias, Egadi...)</option>
+    <option value="islas_lazio">
+      Islas Lazio (Ponza, Ventotene)</option>
+    <option value="islas_puglia">
+      Islas Puglia (Tremiti...)</option>
+    <option value="sardena_islas">
+      Cerdeña islas (Carloforte...)</option>
+    <option value="livigno">Livigno</option>
+    <option value="maddalena_carloforte">
+      La Maddalena / Carloforte</option>
+  </select>
 </div>
 <script>
 // Mostrar selector región IT solo cuando destino es Italia
@@ -221,6 +257,11 @@ document.addEventListener('change', function(){
   if(wrapExtras) wrapExtras.style.display=
     (esPalet&&esIT)?'block':'none';
 });
+function toggleZonaEsp(checked){
+  const sel=document.getElementById('select_zonaEsp');
+  if(sel) sel.style.display=checked?'block':'none';
+  if(!checked) window._zonaEspIT=null;
+}
 </script>
   </div>
 </div>
@@ -417,6 +458,30 @@ const MONTELOG_PALLET_EXTRAS={
   avisoTel: 2.00,   // Aviso telefónico previo
   tailLift: 8.00    // Elevador hidráulico
 };
+
+// Suplementos zonas especiales IT — por quintale (100kg)
+// SKUs paletizados: SYN.011 (47.4kg) y EMD.003 (46.85kg)
+// ~0.5 quintales por SKU
+const MONTELOG_ZONAS_ESPECIALES={
+  livigno:{sup:25,cotaMinima:50,nota:'Gastos aduaneros'},
+  venezia_centro:{sup:25,cotaMinima:0},
+  venezia_islas:{sup:25,cotaMinima:0},
+  venezia_islas_remotas:{sup:29,cotaMinima:0},
+  islas_campania:{sup:36,cotaMinima:72},
+  capri:{sup:48,cotaMinima:0},
+  portofino:{sup:72,cotaMinima:0,porExpedicion:true},
+  elba:{sup:25,cotaMinima:38.50},
+  giglio_capraia:{sup:42,cotaMinima:0},
+  islas_sicilia:{sup:36,cotaMinima:0},
+  islas_lazio:{sup:36,cotaMinima:0},
+  islas_puglia:{sup:36,cotaMinima:0},
+  sardena_islas:{sup:30,cotaMinima:96},
+  // Ritiri e inoltri
+  venezia_elba_retiro:{sup:10,porExpedicion:true},
+  maddalena_carloforte:{sup:25,porExpedicion:true},
+  asinara_tremiti_ustica:{sup:0,hoc:true},
+  livigno_retiro:{sup:40,porExpedicion:true}
+};
 // Índice columna: 0=H≤60cm, 1=H≤80cm, 2=H≤160cm
 // SYN.011 (47.4kg) → columna 1 (H≤80cm/≤300kg)
 // EMD.003 (46.85kg) → columna 1 (H≤80cm/≤300kg)
@@ -532,7 +597,18 @@ function calcular(){
           const el=document.getElementById(id);
           if(el&&el.checked) extrasIT+=parseFloat(el.value);
         });
-        tarifa=regData[1]+extrasIT;
+        let suplementoZona=0;
+    if(window._zonaEspIT&&
+      MONTELOG_ZONAS_ESPECIALES[window._zonaEspIT]){
+      const z=MONTELOG_ZONAS_ESPECIALES[
+        window._zonaEspIT];
+      if(!z.hoc){
+        // ~0.5 quintales por SKU paletizado
+        suplementoZona=z.porExpedicion?
+          z.sup:Math.max(z.sup*0.5,z.cotaMinima||0);
+      }
+    }
+    tarifa=regData[1]+extrasIT+suplementoZona;
       } else {
         tarifa=MONTELOG_IT[k]||MONTELOG_IT.default;
       }

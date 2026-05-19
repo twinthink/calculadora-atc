@@ -369,19 +369,50 @@ const SKUS={
   EMD003:{nombre:'EMD.003 — 12P Palet',peso:46.85,tasable:50,factor50:true,fob:73.4},
 };
 
-// Comisiones reales verificadas por marketplace y SKU
-// Formato: { default: X, por SKU si varía }
+// Comisiones reales verificadas por marketplace
+// Fuente: Amazon Seller Central — 19/05/2026
+// NOTA: Comisiones escalonadas FR/DE/UK/ES:
+//   15% sobre precio <= 200€ (o <=175£ en UK)
+//   10% sobre precio > 200€ (o >175£ en UK)
+// DST 3% adicional sobre comisión (domicilio ES)
+// Función calcComision() gestiona el escalonado
 const COMISIONES={
-  amazon_es:{EMD001:0.1815,SYN007:0.1815,SYN010:0.1773,SYN011:0.16,EMD003:0.1815,default:0.1815},
-  amazon_it:{EMD001:0.156,SYN007:0.15,SYN010:0.1502,SYN011:0.139,EMD003:0.15,default:0.15},
-  amazon_pt:{default:0.15},
-  amazon_fr:{default:0.15},
-  amazon_de:{default:0.15},
-  amazon_uk:{default:0.15},
-  makro:{default:0.12}, // Pendiente confirmar con metro-marketplace.eu
-  leroy:{default:0.195}, // Real verificado: 19-21% según mercado
-  brico:{default:0.13}, // Real verificado: 13% fijo
-  manomano:{default:0.15}, // Estimado — cuenta sin ventas aún
+  amazon_es:{
+    EMD001:0.1815,SYN007:0.1815,
+    SYN010:0.1773,SYN011:0.16,
+    EMD003:0.1815,default:0.1815,
+    escalonado:true,umbral:200,
+    tramo1:0.15,tramo2:0.10,dst:0.03
+  },
+  amazon_it:{
+    EMD001:0.156,SYN007:0.15,
+    SYN010:0.1502,SYN011:0.139,
+    EMD003:0.15,default:0.15,
+    dst:0.03
+  },
+  amazon_pt:{
+    default:0.15,dst:0.03
+  },
+  amazon_fr:{
+    default:0.15,escalonado:true,
+    umbral:200,tramo1:0.15,
+    tramo2:0.10,dst:0.03
+  },
+  amazon_de:{
+    default:0.15,escalonado:true,
+    umbral:200,tramo1:0.15,
+    tramo2:0.10,dst:0.03
+  },
+  amazon_uk:{
+    default:0.15,escalonado:true,
+    umbral:175,tramo1:0.15,
+    tramo2:0.10,dst:0.03,
+    moneda:'GBP'
+  },
+  makro:{default:0.12},
+  leroy:{default:0.195},
+  brico:{default:0.13},
+  manomano:{default:0.15},
   bol:{default:0.15},
   wayfair:{default:0.15},
   octopia:{default:0.15},
@@ -557,6 +588,27 @@ function costeEtiqueta(skuKey){
   if(devCanal==='amazon')return SKUS[skuKey]?.factor50?11.00:8.50;
   const prov=parseFloat(document.getElementById('provincia').value)||11.58;
   return SKUS[skuKey]?.factor50?prov*1.18:prov;
+}
+
+// Calcula comisión real con escalonado y DST
+function calcComision(mp, sku, precio){
+  const c=COMISIONES[mp]||COMISIONES.otro;
+  let comBase;
+  if(c.escalonado && precio){
+    const umbral=c.umbral||200;
+    if(precio<=umbral){
+      comBase=c.tramo1||0.15;
+    } else {
+      // Comisión ponderada
+      const parte1=umbral*(c.tramo1||0.15);
+      const parte2=(precio-umbral)*(c.tramo2||0.10);
+      comBase=(parte1+parte2)/precio;
+    }
+  } else {
+    comBase=c[sku]||c.default||0.15;
+  }
+  const dst=c.dst||0;
+  return comBase+(comBase*dst);
 }
 
 function calcular(){

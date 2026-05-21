@@ -201,7 +201,47 @@
     <input type="checkbox" id="extra_taillift" value="8">
     Tail lift (elevador) — 8,00€
   </label>
-  <div id="zonaEsp_row" style="display:none;margin-top:8px">
+
+</div>
+<script>
+// Mostrar selector región IT solo cuando destino es Italia
+// y SKU es SYN011 o EMD003
+document.addEventListener('change', function(){
+  const dest=document.getElementById('provincia');
+  const sku=document.querySelector('select[id^="sku-"]');
+  const wrapRegion=document.getElementById('regionIT_wrap');
+  const wrapExtras=document.getElementById('extrasIT_wrap');
+  const wrapZona=document.getElementById('select_zonaEsp')?.parentElement;
+  const checkZona=document.getElementById('extra_zonaEsp');
+
+  if(!dest||!sku) return;
+
+  const esPalet=sku.value==='SYN011'||sku.value==='EMD003';
+  const esIT=dest.value==='0'&&
+    dest.options[dest.selectedIndex]
+    .text.includes('Italia');
+
+  // Región solo para paletizados
+  if(wrapRegion) wrapRegion.style.display=
+    (esPalet&&esIT)?'block':'none';
+
+  // Extras palet solo para paletizados
+  if(wrapExtras) wrapExtras.style.display=
+    (esPalet&&esIT)?'block':'none';
+
+  // Zona especial para TODOS los SKUs en Italia
+  const zonaRow=document.getElementById('zonaEsp_row');
+  if(zonaRow) zonaRow.style.display=esIT?'block':'none';
+});
+function toggleZonaEsp(checked){
+  const sel=document.getElementById('select_zonaEsp');
+  if(sel) sel.style.display=checked?'block':'none';
+  if(!checked) window._zonaEspIT=null;
+}
+</script>
+  </div>
+</div>
+<div id="zonaEsp_row" style="display:none;margin-top:8px">
           <label style="font-size:12px;display:block;
               margin-top:8px">
               <input type="checkbox" id="extra_zonaEsp"
@@ -247,45 +287,6 @@
                     </optgroup>
                   </select>
         </div>
-</div>
-<script>
-// Mostrar selector región IT solo cuando destino es Italia
-// y SKU es SYN011 o EMD003
-document.addEventListener('change', function(){
-  const dest=document.getElementById('provincia');
-  const sku=document.querySelector('select[id^="sku-"]');
-  const wrapRegion=document.getElementById('regionIT_wrap');
-  const wrapExtras=document.getElementById('extrasIT_wrap');
-  const wrapZona=document.getElementById('select_zonaEsp')?.parentElement;
-  const checkZona=document.getElementById('extra_zonaEsp');
-
-  if(!dest||!sku) return;
-
-  const esPalet=sku.value==='SYN011'||sku.value==='EMD003';
-  const esIT=dest.value==='0'&&
-    dest.options[dest.selectedIndex]
-    .text.includes('Italia');
-
-  // Región solo para paletizados
-  if(wrapRegion) wrapRegion.style.display=
-    (esPalet&&esIT)?'block':'none';
-
-  // Extras palet solo para paletizados
-  if(wrapExtras) wrapExtras.style.display=
-    (esPalet&&esIT)?'block':'none';
-
-  // Zona especial para TODOS los SKUs en Italia
-  const zonaRow=document.getElementById('zonaEsp_row');
-  if(zonaRow) zonaRow.style.display=esIT?'block':'none';
-});
-function toggleZonaEsp(checked){
-  const sel=document.getElementById('select_zonaEsp');
-  if(sel) sel.style.display=checked?'block':'none';
-  if(!checked) window._zonaEspIT=null;
-}
-</script>
-  </div>
-</div>
 
 <div class="section-label">Tipo de cliente</div>
 <div class="toggle-row" id="cliente-row">

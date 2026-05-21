@@ -348,7 +348,7 @@ function toggleZonaEsp(checked){
   <div class="result-row" id="row-devolucion" style="display:none"><span class="result-label">Coste etiqueta devolución</span><span class="result-value negative" id="r-devolucion">—</span></div>
   <div class="divider"></div>
   <div class="result-row total"><span class="result-label">💸 Coste total incidencia</span><span class="result-value negative" id="r-total">—</span></div>
-  <div class="result-row recovery"><span class="result-label">⚖️ Cap LCTTM reclamable (art. 57.1)</span><span class="result-value positive" id="r-lcttm">—</span></div>
+  <div class="result-row recovery"><span class="result-label" id="r-lcttm-label">⚖️ Cap LCTTM reclamable (art. 57.1)</span><span class="result-value positive" id="r-lcttm">—</span></div>
   <div class="result-row recovery"><span class="result-label">💰 Coste neto tras reclamación</span><span class="result-value" id="r-neto">—</span></div>
   <div class="tags">
     <span class="tag" id="t-responsable">—</span>
@@ -450,8 +450,8 @@ const MONTELOG_IT={
   EMD001:20.00,
   SYN007:29.00,
   SYN010:29.00,
-  SYN011:40.98,
-  EMD003:40.98,
+  SYN011:null,
+  EMD003:null,
   default:29.00
 };
 
@@ -662,7 +662,7 @@ function calcular(){
     }
     tarifa=regData[1]+extrasIT+suplementoZona;
       } else {
-        tarifa=MONTELOG_IT[k]||MONTELOG_IT.default;
+        tarifa=(k==='SYN011'||k==='EMD003')?MONTELOG_PALLET.default[1]:MONTELOG_IT[k]||MONTELOG_IT.default;
       }
     } else {
       tarifa=s.factor50?prov*1.18:prov;
@@ -673,7 +673,12 @@ function calcular(){
     const comLinea=pvpN*comRate;
 
     const prod=(fob+flete)*LANDED;
-    const lcttm=s.peso*6.67*u;
+    let lcttm,lcttmLabel,lcttmShow;
+if(mp==='amazon_es'||mp==='amazon_pt'){lcttm=s.peso*6.67*u;lcttmLabel='Cap LCTTM reclamable (art. 57.1)';lcttmShow=true;}
+else if(mp==='amazon_it'){lcttm=s.peso*1.00*u;lcttmLabel='Cap reclamable Montelog/aseguradora IT';lcttmShow=true;}
+else if(mp==='amazon_fr'){lcttm=s.peso*10.00*u;lcttmLabel='Cap reclamable DHL FR (CMR ~8.33 SDR/kg)';lcttmShow=true;}
+else if(mp==='amazon_uk'){lcttm=50.00*u;lcttmLabel='Cap reclamable DPD UK (estándar £50/paquete — verificar cobertura extendida)';lcttmShow=true;}
+else{lcttm=0;lcttmLabel='Cap reclamable: pendiente de definir';lcttmShow=false;}
     tProd+=prod*u;tEnvio+=tarifa*u;tLCTTM+=lcttm;tPVP+=pvpN*u;tComision+=comLinea*u;
     resLineas.push({nombre:s.nombre,u,pvpN:pvpN*u,prod:prod*u,envio:tarifa*u,lcttm,comRate});
   }
@@ -704,7 +709,10 @@ function calcular(){
   document.getElementById('r-envio').textContent=fmt(tEnvio);
   document.getElementById('r-comision').textContent=fmt(comisionTotal);
   document.getElementById('r-total').textContent=fmt(total);
-  document.getElementById('r-lcttm').textContent=fmt(tLCTTM);
+  const rowLcttm=document.getElementById('row-lcttm');
+const lblLcttm=document.getElementById('r-lcttm-label');
+const valLcttm=document.getElementById('r-lcttm');
+if(lcttmShow&&tLCTTM>0){if(rowLcttm)rowLcttm.style.display='flex';if(lblLcttm)lblLcttm.textContent=resLineas[0]?lcttmLabel:'';valLcttm.textContent=fmt(tLCTTM);}else{if(rowLcttm)rowLcttm.style.display='flex';if(lblLcttm)lblLcttm.textContent=lcttmLabel||'Cap reclamable: pendiente de definir';valLcttm.textContent=lcttmShow?fmt(tLCTTM):'—';}
   const nEl=document.getElementById('r-neto');
   nEl.textContent=fmt(neto);
   nEl.className='result-value '+(neto<total*.3?'positive':neto<total*.6?'warning':'negative');

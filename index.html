@@ -625,6 +625,7 @@ function calcular(){
   if(!lineas.length){alert('Añade al menos un modelo.');return;}
 
   let tProd=0,tEnvio=0,tLCTTM=0,tPVP=0,tComision=0;
+let lcttm=0,lcttmLabel='',lcttmShow=false;
   resLineas=[];
 
   for(const l of lineas){
@@ -673,8 +674,7 @@ function calcular(){
     const comLinea=pvpN*comRate;
 
     const prod=(fob+flete)*LANDED;
-    let lcttm,lcttmLabel,lcttmShow;
-if(mp==='amazon_es'||mp==='amazon_pt'){lcttm=s.peso*6.67*u;lcttmLabel='Cap LCTTM reclamable (art. 57.1)';lcttmShow=true;}
+    if(mp==='amazon_es'||mp==='amazon_pt'){lcttm=s.peso*6.67*u;lcttmLabel='Cap LCTTM reclamable (art. 57.1)';lcttmShow=true;}
 else if(mp==='amazon_it'){lcttm=s.peso*1.00*u;lcttmLabel='Cap reclamable Montelog/aseguradora IT';lcttmShow=true;}
 else if(mp==='amazon_fr'){lcttm=s.peso*10.00*u;lcttmLabel='Cap reclamable DHL FR (CMR ~8.33 SDR/kg)';lcttmShow=true;}
 else if(mp==='amazon_uk'){lcttm=50.00*u;lcttmLabel='Cap reclamable DPD UK (estándar £50/paquete — verificar cobertura extendida)';lcttmShow=true;}

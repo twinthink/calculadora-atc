@@ -252,8 +252,8 @@
 // Mostrar selector región IT solo cuando destino es Italia
 // y SKU es SYN011 o EMD003
 document.addEventListener('change', function(){
-  const dest=document.getElementById('destino');
-  const sku=document.getElementById('sku');
+  const dest=document.getElementById('provincia');
+  const sku=document.querySelector('select[id^="sku-"]');
   const wrapRegion=document.getElementById('regionIT_wrap');
   const wrapExtras=document.getElementById('extrasIT_wrap');
   const wrapZona=document.getElementById('select_zonaEsp')?.parentElement;

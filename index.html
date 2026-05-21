@@ -208,35 +208,43 @@
     Zona especial / isla — ver suplemento
   </label>
   <select id="select_zonaEsp"
-    style="display:none;margin-top:4px;
-    font-size:12px;width:100%"
-    onchange="window._zonaEspIT=this.value">
-    <option value="">— Seleccionar zona —</option>
-    <option value="venezia_centro">
-      Venecia centro histórico</option>
-    <option value="venezia_islas">
-      Venecia islas (Murano, Lido...)</option>
-    <option value="venezia_islas_remotas">
-      Venecia islas remotas (Burano...)</option>
-    <option value="islas_campania">
-      Islas Campania (Ischia, Procida)</option>
-    <option value="capri">Capri</option>
-    <option value="portofino">Portofino</option>
-    <option value="elba">Isla de Elba</option>
-    <option value="giglio_capraia">
-      Giglio / Capraia</option>
-    <option value="islas_sicilia">
-      Islas Sicilia (Eolias, Egadi...)</option>
-    <option value="islas_lazio">
-      Islas Lazio (Ponza, Ventotene)</option>
-    <option value="islas_puglia">
-      Islas Puglia (Tremiti...)</option>
-    <option value="sardena_islas">
-      Cerdeña islas (Carloforte...)</option>
-    <option value="livigno">Livigno</option>
-    <option value="maddalena_carloforte">
-      La Maddalena / Carloforte</option>
-  </select>
+          style="display:none;margin-top:4px;
+          font-size:12px;width:100%"
+          onchange="window._zonaEspIT=this.value">
+          <option value="">— Seleccionar zona —</option>
+          <optgroup label="Venecia (solo paletizados)">
+            <option value="venezia_centro">
+              Venecia centro histórico</option>
+            <option value="venezia_islas">
+              Venecia islas (Murano, Lido...)</option>
+            <option value="venezia_remotas">
+              Venecia islas remotas (Burano...)</option>
+          </optgroup>
+          <optgroup label="Islas y zonas remotas">
+            <option value="islas_campania">
+              Islas Campania (Ischia, Procida)</option>
+            <option value="capri">Capri</option>
+            <option value="portofino">Portofino</option>
+            <option value="elba">
+              Isla de Elba / Venecia (TNT)</option>
+            <option value="giglio_capraia">
+              Giglio / Capraia</option>
+            <option value="islas_sicilia">
+              Islas Sicilia (Eolias, Egadi...)</option>
+            <option value="islas_lazio">
+              Islas Lazio (Ponza, Ventotene)</option>
+            <option value="islas_puglia">
+              Islas Puglia (Tremiti...)</option>
+            <option value="cerdena_islas">
+              Cerdeña islas (Carloforte...)</option>
+            <option value="maddalena">
+              La Maddalena / Carloforte (TNT)</option>
+            <option value="asinara_tremiti">
+              Asinara / Tremiti / Ustica — HOC</option>
+            <option value="livigno">
+              Livigno (+ gastos aduaneros)</option>
+          </optgroup>
+        </select>
 </div>
 <script>
 // Mostrar selector región IT solo cuando destino es Italia
@@ -492,30 +500,38 @@ const MONTELOG_PALLET_EXTRAS={
 
 // Suplementos zonas especiales IT — por quintale (100kg)
 // SKUs paletizados: SYN.011 (47.4kg) y EMD.003 (46.85kg)
-// ~0.5 quintales por SKU
+// Suplementos zonas especiales IT paletizados
+// (SYN.011 y EMD.003 — Montelog)
+// Peso real <100kg → siempre mínimo indivisible
+// Confirmado reunión Montelog 21/05/2026
 const MONTELOG_ZONAS_ESPECIALES={
-  livigno:{sup:25,cotaMinima:50,nota:'Gastos aduaneros'},
-  venezia_centro:{sup:25,cotaMinima:0},
-  venezia_islas:{sup:25,cotaMinima:0},
-  venezia_islas_remotas:{sup:29,cotaMinima:0},
-  islas_campania:{sup:36,cotaMinima:72},
-  capri:{sup:48,cotaMinima:0},
-  portofino:{sup:72,cotaMinima:0,porExpedicion:true},
-  elba:{sup:25,cotaMinima:38.50},
-  giglio_capraia:{sup:42,cotaMinima:0},
-  islas_sicilia:{sup:36,cotaMinima:0},
-  islas_lazio:{sup:36,cotaMinima:0},
-  islas_puglia:{sup:36,cotaMinima:0},
-  sardena_islas:{sup:30,cotaMinima:96},
-  // Ritiri e inoltri
-  venezia_elba_retiro:{sup:10,porExpedicion:true},
-  maddalena_carloforte:{sup:25,porExpedicion:true},
-  asinara_tremiti_ustica:{sup:0,hoc:true},
-  livigno_retiro:{sup:40,porExpedicion:true}
+  venezia_centro:    {sup:25, min:25},
+  venezia_islas:     {sup:25, min:25},
+  venezia_remotas:   {sup:29, min:25},
+  islas_campania:    {sup:36, min:72},
+  capri:             {sup:48, min:48},
+  portofino:         {sup:72, min:72, porExp:true},
+  elba:              {sup:25, min:38.50},
+  giglio_capraia:    {sup:42, min:25},
+  islas_sicilia:     {sup:36, min:25},
+  islas_lazio:       {sup:36, min:25},
+  islas_puglia:      {sup:36, min:25},
+  cerdena_islas:     {sup:30, min:96},
+  livigno:           {sup:25, min:25, aduanas:true}
+};
+// Suplementos zonas especiales IT no paletizados
+// (EMD.001, SYN.007, SYN.010 — TNT/FedEx)
+// Fuente: tabla Ritiri e Inoltri — reunión 21/05/2026
+const TNT_ZONAS_ESPECIALES={
+  venezia_elba:      {sup:10, porExp:true},
+  maddalena:         {sup:25, porExp:true},
+  asinara_tremiti:   {sup:0,  hoc:true},
+  livigno:           {sup:40, porExp:true, aduanas:true}
 };
 // Índice columna: 0=H≤60cm, 1=H≤80cm, 2=H≤160cm
 // SYN.011 (47.4kg) → columna 0 (H≤60cm/≤150kg)
 // EMD.003 (46.85kg) → columna 0 (H≤60cm/≤150kg)
+// Confirmado reunión Montelog 21/05/2026
 
 const LANDED=1.35,TC=0.92;
 let tipo='retraso',resolucion='reenvio',cliente='b2b',devActiva=false,devCanal='amazon',lineaCount=0,resLineas=[];
@@ -653,17 +669,24 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
         let suplementoZona=0;
     if(window._zonaEspIT&&
       MONTELOG_ZONAS_ESPECIALES[window._zonaEspIT]){
-      const z=MONTELOG_ZONAS_ESPECIALES[
-        window._zonaEspIT];
-      if(!z.hoc){
-        // ~0.5 quintales por SKU paletizado
-        suplementoZona=z.porExpedicion?
-          z.sup:Math.max(z.sup*0.5,z.cotaMinima||0);
+      const z=MONTELOG_ZONAS_ESPECIALES[window._zonaEspIT];
+      // Peso real <100kg → siempre aplicar mínimo
+      suplementoZona=z.porExp?z.sup:z.min;
+      // Nota aduanas Livigno
+      if(z.aduanas){
+        console.warn('Livigno: verificar costes aduaneros adicionales');
       }
     }
     tarifa=regData[0]+extrasIT+suplementoZona;
       } else {
         tarifa=(k==='SYN011'||k==='EMD003')?MONTELOG_PALLET.default[1]:MONTELOG_IT[k]||MONTELOG_IT.default;
+        let suplementoZonaTNT=0;
+        if(window._zonaEspIT&&
+          TNT_ZONAS_ESPECIALES[window._zonaEspIT]){
+          const zt=TNT_ZONAS_ESPECIALES[window._zonaEspIT];
+          if(!zt.hoc) suplementoZonaTNT=zt.sup;
+        }
+        tarifa=tarifa+suplementoZonaTNT;
       }
     } else {
       tarifa=s.factor50?prov*1.18:prov;

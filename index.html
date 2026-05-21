@@ -514,8 +514,8 @@ const MONTELOG_ZONAS_ESPECIALES={
   livigno_retiro:{sup:40,porExpedicion:true}
 };
 // Índice columna: 0=H≤60cm, 1=H≤80cm, 2=H≤160cm
-// SYN.011 (47.4kg) → columna 1 (H≤80cm/≤300kg)
-// EMD.003 (46.85kg) → columna 1 (H≤80cm/≤300kg)
+// SYN.011 (47.4kg) → columna 0 (H≤60cm/≤150kg)
+// EMD.003 (46.85kg) → columna 0 (H≤60cm/≤150kg)
 
 const LANDED=1.35,TC=0.92;
 let tipo='retraso',resolucion='reenvio',cliente='b2b',devActiva=false,devCanal='amazon',lineaCount=0,resLineas=[];
@@ -661,7 +661,7 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
           z.sup:Math.max(z.sup*0.5,z.cotaMinima||0);
       }
     }
-    tarifa=regData[1]+extrasIT+suplementoZona;
+    tarifa=regData[0]+extrasIT+suplementoZona;
       } else {
         tarifa=(k==='SYN011'||k==='EMD003')?MONTELOG_PALLET.default[1]:MONTELOG_IT[k]||MONTELOG_IT.default;
       }

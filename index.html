@@ -178,31 +178,6 @@
     <option value="SARDEGNA">Cerdeña</option>
   </select>
 </div>
-<div id="extrasIT_wrap" style="display:none;
-  margin-top:8px;padding:8px;
-  background:#f8f9fc;border-radius:6px">
-  <label style="font-size:12px;color:#666;
-    display:block;margin-bottom:6px">
-    <b>Extras palet (marcar los que apliquen):</b>
-  </label>
-  <label style="font-size:12px;display:block">
-    <input type="checkbox" id="extra_palet" value="7">
-    Palet de madera — 7,00€
-  </label>
-  <label style="font-size:12px;display:block">
-    <input type="checkbox" id="extra_seguro" value="2">
-    Seguro por expedición — 2,00€
-  </label>
-  <label style="font-size:12px;display:block">
-    <input type="checkbox" id="extra_aviso" value="2">
-    Aviso telefónico previo — 2,00€
-  </label>
-  <label style="font-size:12px;display:block">
-    <input type="checkbox" id="extra_taillift" value="8">
-    Tail lift (elevador) — 8,00€
-  </label>
-
-</div>
 <script>
 // Mostrar selector región IT solo cuando destino es Italia
 // y SKU es SYN011 o EMD003
@@ -226,8 +201,6 @@ document.addEventListener('change', function(){
     (esPalet&&esIT)?'block':'none';
 
   // Extras palet solo para paletizados
-  if(wrapExtras) wrapExtras.style.display=
-    (esPalet&&esIT)?'block':'none';
 
   // Zona especial para TODOS los SKUs en Italia
   const zonaRow=document.getElementById('zonaEsp_row');
@@ -674,13 +647,7 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
       if((k==='SYN011'||k==='EMD003')&&window._regionIT){
         const regData=MONTELOG_PALLET[window._regionIT]
           ||MONTELOG_PALLET.default;
-        let extrasIT=0;
-        ['extra_palet','extra_seguro',
-         'extra_aviso','extra_taillift'].forEach(id=>{
-          const el=document.getElementById(id);
-          if(el&&el.checked) extrasIT+=parseFloat(el.value);
-        });
-        let suplementoZona=0;
+                let suplementoZona=0;
     if(window._zonaEspIT&&
       MONTELOG_ZONAS_ESPECIALES[window._zonaEspIT]){
       const z=MONTELOG_ZONAS_ESPECIALES[window._zonaEspIT];
@@ -691,7 +658,10 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
         console.warn('Livigno: verificar costes aduaneros adicionales');
       }
     }
-    tarifa=regData[0]+extrasIT+suplementoZona;
+    // +7€ palet de madera — automático
+    // Aviso telefónico incluido en tarifa Montelog
+    // Confirmado reunión Montelog 21/05/2026
+    tarifa=regData[0]+7+suplementoZona;
       } else {
         tarifa=(k==='SYN011'||k==='EMD003')?MONTELOG_PALLET.default[1]:MONTELOG_IT[k]||MONTELOG_IT.default;
         let suplementoZonaTNT=0;
@@ -781,7 +751,7 @@ function copiarClickUp(){
   if(resolucion==='reenvio'){
     lines.push('Coste envío reenvío: '+document.getElementById('r-reenvio-envio').textContent);
     lines.push('Coste producto reenvío: '+document.getElementById('r-reenvio-producto').textContent);
-  }
+  }+7+suplementoZona
   if(resolucion==='reembolso')lines.push('Reembolso cliente: '+document.getElementById('r-reembolso').textContent);
   if(devActiva)lines.push('Etiqueta devolución: '+document.getElementById('r-devolucion').textContent);
   lines.push('Comisión marketplace: '+document.getElementById('r-comision').textContent,'---','COSTE TOTAL: '+document.getElementById('r-total').textContent,'Cap LCTTM reclamable: '+document.getElementById('r-lcttm').textContent,'COSTE NETO tras reclamación: '+document.getElementById('r-neto').textContent);

@@ -488,23 +488,22 @@ const MONTELOG_PALLET_EXTRAS={
 // Suplementos zonas especiales IT — por quintale (100kg)
 // SKUs paletizados: SYN.011 (47.4kg) y EMD.003 (46.85kg)
 // Suplementos zonas especiales IT paletizados
-// (SYN.011 y EMD.003 — Montelog)
-// Peso real <100kg → siempre mínimo indivisible
-// Confirmado reunión Montelog 21/05/2026
+// SYN.011 y EMD.003 — peso volumétrico = 300kg = 3 quintales
+// Confirmado con Montelog 22/05/2026
 const MONTELOG_ZONAS_ESPECIALES={
-  venezia_centro:    {sup:25, min:25},
-  venezia_islas:     {sup:25, min:25},
-  venezia_remotas:   {sup:29, min:25},
-  islas_campania:    {sup:36, min:72},
-  capri:             {sup:48, min:48},
-  portofino:         {sup:72, min:72, porExp:true},
-  elba:              {sup:25, min:38.50},
-  giglio_capraia:    {sup:42, min:25},
-  islas_sicilia:     {sup:36, min:25},
-  islas_lazio:       {sup:36, min:25},
-  islas_puglia:      {sup:36, min:25},
-  cerdena_islas:     {sup:30, min:96},
-  livigno:           {sup:25, min:25, aduanas:true}
+  venezia_centro:    {sup:75},
+  venezia_islas:     {sup:75},
+  venezia_remotas:   {sup:87},
+  islas_campania:    {sup:108},
+  capri:             {sup:144},
+  portofino:         {sup:72, porExp:true},
+  elba:              {sup:75},
+  giglio_capraia:    {sup:126},
+  islas_sicilia:     {sup:108},
+  islas_lazio:       {sup:108},
+  islas_puglia:      {sup:108},
+  cerdena_islas:     {sup:96},
+  livigno:           {sup:75, aduanas:true}
 };
 // Suplementos zonas especiales IT no paletizados
 // (EMD.001, SYN.007, SYN.010 — TNT/FedEx)
@@ -651,11 +650,11 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
     if(window._zonaEspIT&&
       MONTELOG_ZONAS_ESPECIALES[window._zonaEspIT]){
       const z=MONTELOG_ZONAS_ESPECIALES[window._zonaEspIT];
-      // Peso real <100kg → siempre aplicar mínimo
-      suplementoZona=z.porExp?z.sup:z.min;
-      // Nota aduanas Livigno
+      suplementoZona=z.sup;
       if(z.aduanas){
-        console.warn('Livigno: verificar costes aduaneros adicionales');
+        console.warn(
+          'Livigno: verificar costes aduaneros adicionales'
+        );
       }
     }
     // +7€ palet de madera — automático

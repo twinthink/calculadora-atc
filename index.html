@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATC Calculator v6.0 — TwinThink</title>
+<title>ATC Calculator v6.1 — TwinThink</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mohno:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
   :root {
@@ -92,7 +92,7 @@
 
 <div class="header">
   <div class="logo">TwinThink ATC</div>
-  <div class="badge">Calculadora v6.0</div>
+  <div class="badge">Calculadora v6.1</div>
 </div>
 
 <h1>Coste de<br><span>Incidencia</span></h1>
@@ -193,9 +193,19 @@
 </div>
 <div id="carrierFR_wrap" style="display:none;margin-top:8px">
   <label style="font-size:12px;color:#666">
-    Zona de Francia (por departamento del destino):
+    Código postal del destino:
   </label>
-  <select id="zonaFR" onchange="window._zonaFR=this.value;refrescarRecomendacion()">
+  <input type="text" id="cpFR" placeholder="p. ej. 75008, o solo 75"
+         inputmode="numeric" autocomplete="off"
+         oninput="resolverCPFR(this.value)"
+         style="width:100%;font-size:14px">
+  <div id="cpFR-eco" style="margin-top:4px;font-size:12px;line-height:1.4;color:var(--text3)">
+    Escribe el código postal y la zona se calcula sola.
+  </div>
+  <label style="font-size:12px;color:#666;display:block;margin-top:8px">
+    Zona (se rellena sola, o elígela a mano):
+  </label>
+  <select id="zonaFR" onchange="window._zonaFR=this.value;marcarZonaManual();refrescarRecomendacion()">
   </select>
   <label style="font-size:12px;color:#666;display:block;margin-top:8px">
     Transportista (selección manual):
@@ -255,10 +265,53 @@ function poblarZonasFR(){
   if(!sel||sel.options.length) return;
   DACHSER_GRIDS.FR.zonas.forEach((z,i)=>{
     const o=document.createElement('option');
-    o.value=i; o.text=z.z+' — '+z.desc;
+    o.value=i;
+    o.text=z.z+' · '+(z.corta||z.desc);
+    o.title=z.z+' — departamentos '+(z.deps||[]).map(d=>String(d).padStart(2,'0')).join(', ');
     sel.appendChild(o);
   });
   window._zonaFR='0';
+}
+
+// Resuelve el código postal escrito y selecciona la zona correspondiente.
+function resolverCPFR(valor){
+  const eco=document.getElementById('cpFR-eco');
+  const sel=document.getElementById('zonaFR');
+  if(!eco||!sel) return;
+  const v=String(valor||'').trim();
+  if(!v){
+    eco.style.color='var(--text3)';
+    eco.innerHTML='Escribe el código postal y la zona se calcula sola.';
+    return;
+  }
+  const r=zonaFRPorCP(v);
+  if(!r){
+    eco.style.color='var(--danger)';
+    eco.innerHTML='⚠️ No reconozco ese código postal. Escribe las 5 cifras (p. ej. 75008) '+
+                  'o el número de departamento (p. ej. 75). Si el destino no está en Francia '+
+                  'metropolitana, hay que pedir cotización a Dachser.';
+    return;
+  }
+  sel.value=String(r.idx);
+  window._zonaFR=String(r.idx);
+  const deps=(r.zona.deps||[]).map(d=>String(d).padStart(2,'0')).join(', ');
+  eco.style.color='var(--accent2)';
+  eco.innerHTML='✓ Zona <strong>'+r.zona.z+'</strong> · '+(r.zona.corta||r.zona.desc)+
+                '<br><span style="color:var(--text3)">Departamentos de esta zona: '+deps+'</span>';
+  if(typeof refrescarRecomendacion==='function') refrescarRecomendacion();
+}
+
+// Si el usuario cambia la zona a mano, avisar de que ya no corresponde al CP escrito.
+function marcarZonaManual(){
+  const eco=document.getElementById('cpFR-eco');
+  const cp=document.getElementById('cpFR');
+  if(!eco||!cp) return;
+  const r=zonaFRPorCP(cp.value);
+  if(cp.value.trim() && r && String(r.idx)!==String(window._zonaFR)){
+    eco.style.color='var(--warning)';
+    eco.innerHTML='⚠️ Zona elegida a mano: no es la que corresponde al CP '+cp.value.trim()+
+                  ' (sería '+r.zona.z+'). Se usará la que has seleccionado.';
+  }
 }
 
 // Muestra qué transportista recomienda la tabla de umbrales de la guía y avisa si el elegido
@@ -644,19 +697,19 @@ const DACHSER_100KG_LIM   = [150, 200, 300, 400, 500, 750, 1000, 1250, 1500, 175
 // Cada zona: 21 importes = 8 de precio fijo + 13 de € por 100 kg. Netos, sin IVA.
 const DACHSER_GRIDS = {
   FR: { label: 'Francia', clave: 'departamento', zonas: [
-    { z:'Z1',  desc:'31, 47, 81 (Toulouse, Agen, Castres)', t:[29.06,29.94,30.65,31.51,32.22,32.90,33.98,35.68, 31.85,26.16,22.70,20.54,19.02,18.07,17.51,16.96,16.09,15.65,15.22,14.14,12.77] },
-    { z:'Z2',  desc:'11, 32, 33, 46 (Burdeos)',             t:[35.60,36.90,37.93,39.35,40.51,41.65,43.42,45.75, 41.06,34.06,29.86,27.10,25.15,23.96,23.27,22.63,21.46,20.83,20.22,19.12,17.01] },
-    { z:'Z3',  desc:'17, 30, 34, 36, 64, 65, 66, 79, 85',   t:[36.89,38.30,39.38,40.95,42.24,43.52,45.47,47.94, 43.11,35.89,31.54,28.69,26.65,25.41,24.70,24.04,22.79,22.13,21.49,20.40,18.10] },
-    { z:'Z4',  desc:'03, 09, 12, 24, 40, 63, 82',           t:[37.52,38.96,40.12,41.76,43.11,44.45,46.51,49.05, 44.12,36.81,32.41,29.50,27.39,26.16,25.42,24.77,23.49,22.78,22.13,21.04,18.67] },
-    { z:'Z5',  desc:'07, 13, 16, 26, 35, 44, 49, 53, 72, 86 (Marsella, Nantes)', t:[38.39,39.92,41.13,42.89,44.33,45.79,47.99,50.63, 45.62,38.14,33.67,30.65,28.52,27.24,26.48,25.84,24.49,23.78,23.07,22.01,19.51] },
-    { z:'Z6',  desc:'15, 18, 19, 42, 43, 58, 69, 84 (Lyon)', t:[39.65,41.30,42.60,44.56,46.15,47.76,50.16,52.97, 47.85,40.16,35.58,32.46,30.21,28.91,28.13,27.47,26.05,25.27,24.54,23.52,20.78] },
-    { z:'Z7',  desc:'01, 21, 22, 37, 38, 52, 54, 56, 71, 88', t:[40.27,41.98,43.34,45.37,47.04,48.73,51.26,54.16, 48.96,41.18,36.55,33.37,31.08,29.76,28.96,28.31,26.83,26.06,25.27,24.28,21.44] },
-    { z:'Z8',  desc:'10, 28, 41, 45, 89',                   t:[40.85,42.61,43.99,46.16,47.87,49.65,52.29,55.27, 50.01,42.15,37.47,34.25,31.91,30.56,29.78,29.13,27.61,26.81,26.02,25.04,22.11] },
-    { z:'Z9',  desc:'02, 04, 08, 25, 29, 51, 55, 57, 60, 67, 68, 70, 77, 78, 87, 91-95 (periferia París, Estrasburgo)', t:[41.62,43.48,44.92,47.20,49.04,50.93,53.74,56.82, 51.49,43.52,38.79,35.48,33.11,31.73,30.91,30.26,28.70,27.87,27.04,26.10,23.00] },
-    { z:'Z10', desc:'27, 39, 59, 61, 62, 74, 76, 80, 90 (Lille)', t:[42.37,44.31,45.82,48.23,50.19,52.21,55.17,58.37, 52.97,44.90,40.13,36.74,34.30,32.91,32.08,31.42,29.81,28.93,28.08,27.18,23.95] },
-    { z:'Z11', desc:'14, 23, 48, 50, 73, 75, 83 (PARÍS ciudad)', t:[43.77,45.90,47.53,50.24,52.41,54.69,58.00,61.40, 55.91,47.65,42.79,39.28,36.73,35.31,34.46,33.81,32.08,31.14,30.21,29.43,25.86] },
-    { z:'Z12', desc:'05, 06 (Niza)',                        t:[46.09,48.55,50.42,53.69,56.31,59.07,63.04,66.88, 61.24,52.75,47.80,44.06,41.34,39.86,38.96,38.35,36.43,35.36,34.32,33.74,29.57] },
-    { z:'Z13', desc:'20, 98 (Córcega — solo targoflex, sumar aproximación a Marsella dpto. 13)', t:[49.14,52.20,54.49,58.79,62.24,65.89,71.09,75.61, 69.93,61.33,56.40,52.35,49.37,47.82,46.89,46.36,44.09,42.82,41.57,41.49,36.21] }
+    { z:'Z1', deps:[31,47,81], corta:'Toulouse (31), Castres (81) — la más barata',  desc:'31, 47, 81 (Toulouse, Agen, Castres)', t:[29.06,29.94,30.65,31.51,32.22,32.90,33.98,35.68, 31.85,26.16,22.70,20.54,19.02,18.07,17.51,16.96,16.09,15.65,15.22,14.14,12.77] },
+    { z:'Z2', deps:[11,32,33,46], corta:'Burdeos (33), Carcasona (11)',  desc:'11, 32, 33, 46 (Burdeos)',             t:[35.60,36.90,37.93,39.35,40.51,41.65,43.42,45.75, 41.06,34.06,29.86,27.10,25.15,23.96,23.27,22.63,21.46,20.83,20.22,19.12,17.01] },
+    { z:'Z3', deps:[17,30,34,36,64,65,66,79,85], corta:'Montpellier (34), Nimes (30), Bayona (64)',  desc:'17, 30, 34, 36, 64, 65, 66, 79, 85',   t:[36.89,38.30,39.38,40.95,42.24,43.52,45.47,47.94, 43.11,35.89,31.54,28.69,26.65,25.41,24.70,24.04,22.79,22.13,21.49,20.40,18.10] },
+    { z:'Z4', deps:[03,09,12,24,40,63,82], corta:'Clermont-Ferrand (63), Montauban (82)',  desc:'03, 09, 12, 24, 40, 63, 82',           t:[37.52,38.96,40.12,41.76,43.11,44.45,46.51,49.05, 44.12,36.81,32.41,29.50,27.39,26.16,25.42,24.77,23.49,22.78,22.13,21.04,18.67] },
+    { z:'Z5', deps:[07,13,16,26,35,44,49,53,72,86], corta:'Marsella (13), Nantes (44), Rennes (35)',  desc:'07, 13, 16, 26, 35, 44, 49, 53, 72, 86 (Marsella, Nantes)', t:[38.39,39.92,41.13,42.89,44.33,45.79,47.99,50.63, 45.62,38.14,33.67,30.65,28.52,27.24,26.48,25.84,24.49,23.78,23.07,22.01,19.51] },
+    { z:'Z6', deps:[15,18,19,42,43,58,69,84], corta:'Lyon (69), Aviñón (84), Saint-Étienne (42)',  desc:'15, 18, 19, 42, 43, 58, 69, 84 (Lyon)', t:[39.65,41.30,42.60,44.56,46.15,47.76,50.16,52.97, 47.85,40.16,35.58,32.46,30.21,28.91,28.13,27.47,26.05,25.27,24.54,23.52,20.78] },
+    { z:'Z7', deps:[01,21,22,37,38,52,54,56,71,88], corta:'Grenoble (38), Dijon (21), Tours (37), Nancy (54)',  desc:'01, 21, 22, 37, 38, 52, 54, 56, 71, 88', t:[40.27,41.98,43.34,45.37,47.04,48.73,51.26,54.16, 48.96,41.18,36.55,33.37,31.08,29.76,28.96,28.31,26.83,26.06,25.27,24.28,21.44] },
+    { z:'Z8', deps:[10,28,41,45,89], corta:'Orleans (45), Chartres (28), Blois (41)',  desc:'10, 28, 41, 45, 89',                   t:[40.85,42.61,43.99,46.16,47.87,49.65,52.29,55.27, 50.01,42.15,37.47,34.25,31.91,30.56,29.78,29.13,27.61,26.81,26.02,25.04,22.11] },
+    { z:'Z9', deps:[02,04,08,25,29,51,55,57,60,67,68,70,77,78,87,91,92,93,94,95], corta:'Periferia de París (91-95), Estrasburgo (67)',  desc:'02, 04, 08, 25, 29, 51, 55, 57, 60, 67, 68, 70, 77, 78, 87, 91-95 (periferia París, Estrasburgo)', t:[41.62,43.48,44.92,47.20,49.04,50.93,53.74,56.82, 51.49,43.52,38.79,35.48,33.11,31.73,30.91,30.26,28.70,27.87,27.04,26.10,23.00] },
+    { z:'Z10', deps:[27,39,59,61,62,74,76,80,90], corta:'Lille (59), Rouen (76), Annecy (74)', desc:'27, 39, 59, 61, 62, 74, 76, 80, 90 (Lille)', t:[42.37,44.31,45.82,48.23,50.19,52.21,55.17,58.37, 52.97,44.90,40.13,36.74,34.30,32.91,32.08,31.42,29.81,28.93,28.08,27.18,23.95] },
+    { z:'Z11', deps:[14,23,48,50,73,75,83], corta:'PARÍS ciudad (75), Caen (14), Toulon (83)', desc:'14, 23, 48, 50, 73, 75, 83 (PARÍS ciudad)', t:[43.77,45.90,47.53,50.24,52.41,54.69,58.00,61.40, 55.91,47.65,42.79,39.28,36.73,35.31,34.46,33.81,32.08,31.14,30.21,29.43,25.86] },
+    { z:'Z12', deps:[05,06], corta:'Niza (06), Gap (05)', desc:'05, 06 (Niza)',                        t:[46.09,48.55,50.42,53.69,56.31,59.07,63.04,66.88, 61.24,52.75,47.80,44.06,41.34,39.86,38.96,38.35,36.43,35.36,34.32,33.74,29.57] },
+    { z:'Z13', deps:[20,98], corta:'Córcega (20) y Mónaco (98) — solo targoflex', desc:'20, 98 (Córcega — solo targoflex, sumar aproximación a Marsella dpto. 13)', t:[49.14,52.20,54.49,58.79,62.24,65.89,71.09,75.61, 69.93,61.33,56.40,52.35,49.37,47.82,46.89,46.36,44.09,42.82,41.57,41.49,36.21] }
   ]},
   ES: { label: 'España', clave: 'provincia (2 primeras cifras del CP)', zonas: [
     { z:'Z1', desc:'08 Barcelona', t:[40.62,43.02,44.81,46.86,48.55,50.23,51.92,53.56, 46.62,38.04,31.95,27.57,25.27,23.18,21.87,21.14,20.10,19.44,18.93,18.59,17.26] },
@@ -724,6 +777,33 @@ const UMBRAL_PALE = {
   PT: { EMD003:1, SYN011:1, SYN010:1, SYN007:1, EMD001:1 },   // DHL no cubre → siempre Dachser
   NL: { EMD003:1, SYN011:1, SYN010:1, SYN007:1, EMD001:1 }
 };
+
+// Deduce la zona de Francia a partir de un código postal o de un número de departamento.
+// Acepta "75008", "75", "2A"/"2B" (Córcega → dpto 20) y "980xx" (Mónaco).
+// Devuelve {idx, zona} o null si no se reconoce.
+function zonaFRPorCP(entrada){
+  if(!entrada) return null;
+  let s = String(entrada).trim().toUpperCase().replace(/\s/g, '');
+  if(!s) return null;
+  // Córcega se escribe 2A/2B en los CP pero Dachser la tarifa como departamento 20
+  if(/^2[AB]/.test(s)) s = '20';
+  if(!/^\d+$/.test(s)) return null;
+  // Los CP franceses tienen SIEMPRE 5 cifras, con cero inicial en los departamentos 01-09.
+  //   1-2 cifras → es un número de departamento ("75", "9")
+  //   3-5 cifras → es un código postal; se rellena con ceros por la izquierda hasta 5, así
+  //                "6000" se lee como 06000 (Niza) y no como el departamento 60 (Oise).
+  //                Un input de 3 cifras queda ambiguo y se rechaza en lugar de adivinar mal.
+  //   más de 5   → no es válido
+  let dep;
+  if(s.length <= 2)      dep = s.padStart(2, '0');
+  else if(s.length <= 5) dep = s.padStart(5, '0').slice(0, 2);
+  else                   return null;
+  const zonas = DACHSER_GRIDS.FR.zonas;
+  for(let i = 0; i < zonas.length; i++){
+    if((zonas[i].deps || []).indexOf(parseInt(dep, 10)) !== -1) return {idx: i, zona: zonas[i]};
+  }
+  return null;
+}
 
 // ---- Motor de cálculo Dachser ---------------------------------------------------
 // Peso facturable del palé. Verificado contra la tabla de montaje de la guía:

@@ -1,723 +1,709 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATC Calculator v3 — TwinThink</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mohno:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
-  :root {
-    --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222222;--border:#2a2a2a;
-    --accent:#e8ff00;--accent2:#00ff88;--danger:#ff4444;--warning:#ffaa00;
-    --text:#f0f0f0;--text2:#888888;--text3:#555555;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:24px 16px 60px;max-width:640px;margin:0 auto;}
-  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border);}
-  .logo{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;}
-  .badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
-  h1{font-size:26px;font-weight:300;letter-spacing:-.02em;margin-bottom:4px;}
-  h1 span{color:var(--accent);font-weight:600;}
-  .subtitle{font-size:12px;color:var(--text2);margin-bottom:28px;}
-  .section-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.15em;margin:20px 0 8px;}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-  .field{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;transition:border-color .2s;}
-  .field:focus-within{border-color:var(--accent);}
-  .field label{display:block;font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
-  .field select,.field input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;}
-  .field select option{background:var(--surface2);}
-  .field input::placeholder{color:var(--text3);}
-  .field .hint{font-size:10px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace;}
-  .lineas-container{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
-  .linea-pedido{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;}
-  .linea-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-  .linea-num{font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;}
-  .linea-delete{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text3);font-size:11px;padding:3px 8px;cursor:pointer;transition:all .2s;}
-  .linea-delete:hover{border-color:var(--danger);color:var(--danger);}
-  .linea-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;}
-  .linea-pvp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
-  .linea-field{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
-  .linea-field label{display:block;font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
-  .linea-field select,.linea-field input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;}
-  .linea-field select option{background:var(--surface2);}
-  .linea-field input::placeholder{color:var(--text3);}
-  .lcttm-preview{display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
-  .add-linea-btn{width:100%;background:transparent;border:1px dashed var(--border);border-radius:10px;padding:12px;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .add-linea-btn:hover{border-color:var(--accent);color:var(--accent);}
-  .toggle-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-  .toggle-btn{flex:1;min-width:70px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 8px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;text-align:center;}
-  .toggle-btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600;}
-  .toggle-switch{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;}
-  .toggle-switch-label{font-size:13px;color:var(--text2);}
-  .toggle-switch-label span{display:block;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;}
-  .switch{width:40px;height:22px;background:var(--border);border-radius:11px;position:relative;transition:background .2s;flex-shrink:0;}
-  .switch::after{content:'';position:absolute;width:16px;height:16px;background:var(--text3);border-radius:50%;top:3px;left:3px;transition:all .2s;}
-  .toggle-switch.active .switch{background:var(--accent);}
-  .toggle-switch.active .switch::after{left:21px;background:#000;}
-  .slider-field{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
-  .slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-  .slider-field label{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;}
-  .slider-value{font-family:'DM Mono',monospace;font-size:14px;color:var(--accent);font-weight:500;}
-  input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer;}
-  .calc-btn{width:100%;background:var(--accent);border:none;border-radius:10px;padding:15px;color:#000;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:20px;transition:opacity .2s,transform .1s;}
-  .calc-btn:hover{opacity:.9;}
-  .calc-btn:active{transform:scale(.99);}
-  .results{display:none;margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
-  .results.show{display:block;}
-  .results-header{background:var(--surface2);padding:12px 16px;font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;border-bottom:1px solid var(--border);}
-  .result-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);}
-  .result-row:last-child{border-bottom:none;}
-  .result-label{font-size:12px;color:var(--text2);}
-  .result-value{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);}
-  .result-value.positive{color:var(--accent2);}
-  .result-value.negative{color:var(--danger);}
-  .result-value.warning{color:var(--warning);}
-  .result-value.accent{color:var(--accent);}
-  .result-row.total{background:var(--surface2);padding:14px 16px;}
-  .result-row.total .result-label{font-weight:600;color:var(--text);font-size:13px;}
-  .result-row.total .result-value{font-size:17px;}
-  .result-row.recovery{background:rgba(0,255,136,.05);}
-  .lineas-resumen{padding:12px 16px;border-bottom:1px solid var(--border);}
-  .linea-resumen-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text2);}
-  .linea-resumen-row span:last-child{font-family:'DM Mono',monospace;color:var(--text);}
-  .tags{padding:12px 16px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);}
-  .tag{font-size:10px;font-family:'DM Mono',monospace;background:var(--surface2);color:var(--text3);padding:3px 7px;border-radius:4px;}
-  .copy-btn{width:100%;background:transparent;border:1px solid var(--border);border-radius:10px;padding:11px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:10px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .copy-btn:hover{border-color:var(--accent);color:var(--accent);}
-  .divider{height:1px;background:var(--border);}
-  @media(max-width:400px){.grid{grid-template-columns:1fr;}.linea-grid{grid-template-columns:1fr 1fr;}}
-</style>
-</head>
-<body>
+From 1d59dc24fdfbda2281e9ec84345878356476d535 Mon Sep 17 00:00:00 2001
+From: "Claude (Cowork)" <noreply@anthropic.com>
+Date: Mon, 17 Aug 2026 07:23:17 +0000
+Subject: [PATCH] Cargar tarifas Dachser y DHL desde Castres, y corregir tres
+ bugs de coste
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-<div class="header">
-  <div class="logo">TwinThink ATC</div>
-  <div class="badge">Calculadora v5.0</div>
-</div>
+Tarifas nuevas (fuente: guías Dachser/DHL de TwinThink del 28/07/2026 y grilles
+originales de Matthias Torbay del 27/07/2026):
 
-<h1>Coste de<br><span>Incidencia</span></h1>
-<p class="subtitle">Añade todos los modelos del pedido y obtén el desglose completo al instante.</p>
+- Motor Dachser completo: peso volumétrico a 150 kg/m³, redondeo a 10 kg, tramos
+  de precio fijo hasta 100 kg y € por 100 kg a partir de 101, recargos de gasoil
+  (12 %), EGR (1,78 %) y 5,81 € de fijos por envío.
+- Grilles cargadas: Francia (13 zonas), España (5), Portugal (4), Italia (5),
+  Alemania (6), Bélgica (1) y Países Bajos (3).
+- DHL Express: precio cerrado por unidad y país, máximo 70 kg/bulto, sin
+  cobertura en Portugal ni Países Bajos.
+- Selector de zona y de transportista para Francia, con recomendación automática
+  según la tabla de umbrales de la guía (avisa si el elegido no es el más barato).
+- B2C = targo on-site +30 %. Devolución por transportista = tarifa de ida +50 %.
+  Recargo GMS/GSB aplicado a Leroy Merlin y Brico Dépôt.
+- Pesos de flete según los que declara Dachser, distintos de los del catálogo
+  QIMA (la 011 cambia de 270 a 280 kg facturables).
 
-<div class="section-label">Datos generales del pedido</div>
-<div class="grid">
-  <div class="field">
-    <label>Marketplace</label>
-    <select id="marketplace">
-      <option value="">Seleccionar...</option>
-      <option value="amazon_es">Amazon ES</option>
-      <option value="amazon_it">Amazon IT</option>
-      <option value="amazon_pt">Amazon PT</option>
-      <option value="amazon_fr">Amazon FR</option>
-      <option value="amazon_de">Amazon DE</option>
-      <option value="amazon_uk">Amazon UK</option>
-      <option value="makro">Makro</option>
-      <option value="leroy">Leroy Merlin</option>
-      <option value="brico">Brico / Bricodepot</option>
-      <option value="manomano">ManoMano</option>
-      <option value="bol">Bol.com</option>
-      <option value="wayfair">Wayfair</option>
-      <option value="octopia">Octopia</option>
-      <option value="shopify">Shopify / Web</option>
-      <option value="otro">Otro</option>
-    </select>
-  </div>
-  <div class="field">
-    <label>Provincia destino</label>
-    <select id="provincia">
-      <option value="">Seleccionar...</option>
-      <optgroup label="España">
-        <option value="9.96">Castellón</option>
-        <option value="10.08">Valencia</option>
-        <option value="10.55">Alicante / Tarragona</option>
-        <option value="10.98">Albacete / Barcelona / Murcia / Zaragoza / Lleida</option>
-        <option value="11.58">Cuenca / Girona / Guadalajara / Huesca / Madrid / Soria / Teruel</option>
-        <option value="11.99">Almería / Ávila / Burgos / C.Real / Jaén / La Rioja / Navarra / Segovia / Toledo</option>
-        <option value="12.23">Álava / Córdoba / Gipuzkoa / Granada / Málaga / Palencia / Salamanca / Sevilla / Valladolid / Vizcaya</option>
-        <option value="13.01">Badajoz / Cáceres / Cádiz / Cantabria / León / Zamora</option>
-        <option value="13.62">Asturias / Huelva / Lugo / Orense</option>
-        <option value="14.33">A Coruña / Pontevedra</option>
-        <option value="20.39">Gran Canaria / Tenerife</option>
-        <option value="43.82">Lanzarote / Fuerteventura / Gomera / El Hierro / La Palma</option>
-      </optgroup>
-      <optgroup label="Portugal">
-        <option value="15.70">Lisboa / Coimbra</option>
-        <option value="16.41">Oporto</option>
-        <option value="21.05">Zona 2</option>
-      </optgroup>
-      <optgroup label="Otros mercados">
-        <option value="0">Italia (BRT)</option>
-        <option value="0">Francia (Castres — tarifa aparte)</option>
-        <option value="0">Reino Unido (Mintsoft — provisional)</option>
-      </optgroup>
-    </select>
-<div id="regionIT_wrap" style="display:none;margin-top:8px">
-  <label style="font-size:12px;color:#666">
-    Región italiana (para SKUs paletizados):
-  </label>
-  <select id="regionIT" onchange="window._regionIT=this.value">
-    <option value="default">— Seleccionar región —</option>
-    <option value="PIEMONTE">Piemonte</option>
-    <option value="LOMBARDIA">Lombardía</option>
-    <option value="TRENTINO">Trentino</option>
-    <option value="VENETO">Véneto</option>
-    <option value="FRIULI">Friuli V. Giulia</option>
-    <option value="EMILIA_ROMAGNA">Emilia Romagna</option>
-    <option value="LIGURIA">Liguria</option>
-    <option value="TOSCANA">Toscana</option>
-    <option value="MARCHE">Marche</option>
-    <option value="VALLE_AOSTA">Valle d'Aosta</option>
-    <option value="UMBRIA">Umbria</option>
-    <option value="ABRUZZO">Abruzzo</option>
-    <option value="MOLISE">Molise</option>
-    <option value="LAZIO">Lazio</option>
-    <option value="CAMPANIA">Campania</option>
-    <option value="PUGLIA">Puglia</option>
-    <option value="BASILICATA">Basilicata</option>
-    <option value="CALABRIA">Calabria</option>
-    <option value="SICILIA">Sicilia</option>
-    <option value="SARDEGNA">Cerdeña</option>
-  </select>
-</div>
-<div id="zonaUK_wrap" style="display:none;margin-top:8px">
-  <label style="font-size:12px;color:#666">
-    Zona Reino Unido (tarifas PROVISIONALES — pendiente Mintsoft):
-  </label>
-  <select id="zonaUK" onchange="window._zonaUK=this.value">
-    <option value="mainland">UK Mainland</option>
-    <option value="highlands">Scottish Highlands &amp; Islands</option>
-    <option value="nireland">Northern Ireland</option>
-    <option value="channel">Channel Islands</option>
-    <option value="isleman">Isle of Man</option>
-    <option value="ireland">Irlanda (Rep.) — sin tarifa &gt;30kg</option>
-  </select>
-</div>
-<script>
-// Mostrar selector región IT (Italia) o zona UK (Reino Unido) según destino
-document.addEventListener('change', function(){
-  const dest=document.getElementById('provincia');
-  const wrapRegion=document.getElementById('regionIT_wrap');
-  const wrapUK=document.getElementById('zonaUK_wrap');
+Bugs corregidos:
 
-  if(!dest) return;
+1. Francia contabilizaba 0,00 € de envío y de reenvío, en silencio: caía al else
+   de la tarifa provincial de Ontime con valor 0. Las incidencias francesas
+   estaban infravaloradas por completo.
+2. Cap reclamable de Francia: 10 €/kg (CMR, transporte internacional) → 33 €/kg
+   con tope de 1.000 €/bulto (contrat type général, décret 2017-461, que es el
+   que aplica a un trayecto nacional). Se reclamaba la mitad de lo recuperable.
+3. La previsualización de línea aplicaba el cap español (6,67 €/kg) a todos los
+   mercados mientras el desglose final usaba el correcto. Unificado en
+   capReclamable(), fuente única para previsualización y resultado.
 
-  const destText=dest.options[dest.selectedIndex]?.text||'';
-  const esIT=dest.value==='0'&&destText.includes('Italia');
-  const esUK=destText.includes('Reino Unido');
+Además: campo "Responsable del problema" ampliado con DHL, Dachser, BRT,
+Mintsoft, Castres y MCF, agrupado por tipo de actor y alineado con el campo
+aprobado en ClickUp. Aviso visible para el palet a islas de Italia, cuyo flag
+existía pero nunca se mostraba.
 
-  // Región IT visible para TODOS los SKUs en Italia (afecta también a colli por islas)
-  if(wrapRegion) wrapRegion.style.display=esIT?'block':'none';
-  // Zona UK visible cuando destino Reino Unido
-  if(wrapUK) wrapUK.style.display=esUK?'block':'none';
+Verificado con Chromium headless: 40+ comprobaciones contra los importes
+publicados en la propia guía. El ejemplo oficial (palé de 5 uds de la ref. 003 a
+Madrid) da 133,75 € frente a los 133,76 € del documento. Sin regresión en
+España ni Italia.
 
-  // Zona especial BRT para todos los SKUs en Italia
-  const zonaRow=document.getElementById('zonaEsp_row');
-  if(zonaRow) zonaRow.style.display=esIT?'block':'none';
-});
-function toggleZonaEsp(checked){
-  const sel=document.getElementById('select_zonaEsp');
-  if(sel) sel.style.display=checked?'block':'none';
-  if(!checked) window._zonaEspIT=null;
-}
-</script>
-  </div>
-</div>
-<div id="zonaEsp_row" style="display:none;margin-top:8px">
-          <label style="font-size:12px;display:block;
-              margin-top:8px">
-              <input type="checkbox" id="extra_zonaEsp"
-                onchange="toggleZonaEsp(this.checked)">
-              Zona especial BRT (isole minori / zone franche)
-            </label>
-            <select id="select_zonaEsp"
-                    style="display:none;margin-top:4px;
-                    font-size:12px;width:100%"
-                    onchange="window._zonaEspIT=this.value">
-                    <option value="">— Ninguna —</option>
-                    <option value="isole_minori">
-                      Isole minori / zone franche (+€8/q)</option>
-                    <option value="livigno">
-                      Livigno (+€20/q, aduanas)</option>
-                    <option value="campione">
-                      Campione d'Italia (+€30/q)</option>
-                  </select>
-        </div>
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01GHchBPRYUxqNZxhPuhK5uE
+---
+ index.html | 513 ++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 493 insertions(+), 20 deletions(-)
 
-<div class="section-label">Tipo de cliente</div>
-<div class="toggle-row" id="cliente-row">
-  <button class="toggle-btn" onclick="setCliente('b2c')">👤 B2C (particular)</button>
-  <button class="toggle-btn active" onclick="setCliente('b2b')">🏢 B2B (empresa con NIF)</button>
-</div>
+diff --git a/index.html b/index.html
+index e34e296..e0c42f0 100644
+--- a/index.html
++++ b/index.html
+@@ -3,7 +3,7 @@
+ <head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-<title>ATC Calculator v3 — TwinThink</title>
++<title>ATC Calculator v6.0 — TwinThink</title>
+ <style>
+   @import url('https://fonts.googleapis.com/css2?family=DM+Mohno:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+   :root {
+@@ -92,7 +92,7 @@
+ 
+ <div class="header">
+   <div class="logo">TwinThink ATC</div>
+-  <div class="badge">Calculadora v5.0</div>
++  <div class="badge">Calculadora v6.0</div>
+ </div>
+ 
+ <h1>Coste de<br><span>Incidencia</span></h1>
+@@ -146,7 +146,7 @@
+       </optgroup>
+       <optgroup label="Otros mercados">
+         <option value="0">Italia (BRT)</option>
+-        <option value="0">Francia (Castres — tarifa aparte)</option>
++        <option value="0">Francia (Castres — DHL / Dachser)</option>
+         <option value="0">Reino Unido (Mintsoft — provisional)</option>
+       </optgroup>
+     </select>
+@@ -191,12 +191,35 @@
+     <option value="ireland">Irlanda (Rep.) — sin tarifa &gt;30kg</option>
+   </select>
+ </div>
++<div id="carrierFR_wrap" style="display:none;margin-top:8px">
++  <label style="font-size:12px;color:#666">
++    Zona de Francia (por departamento del destino):
++  </label>
++  <select id="zonaFR" onchange="window._zonaFR=this.value;refrescarRecomendacion()">
++  </select>
++  <label style="font-size:12px;color:#666;display:block;margin-top:8px">
++    Transportista (selección manual):
++  </label>
++  <select id="carrierFR" onchange="window._carrierFR=this.value;refrescarRecomendacion()">
++    <option value="dachser">Dachser (palé)</option>
++    <option value="dhl">DHL Express (unidad suelta)</option>
++  </select>
++  <div id="reco-fr" style="margin-top:6px;padding:8px;border:1px solid var(--border);
++              border-radius:6px;background:var(--surface2);font-size:11px;line-height:1.45;
++              color:var(--text2)"></div>
++  <div style="margin-top:6px;padding:8px;border:1px solid var(--warning);border-radius:6px;
++              background:rgba(255,170,0,.08);font-size:11px;line-height:1.45;color:var(--warning)">
++    ⚠️ La grille de Francia indica vigencia 01/04–31/05/2026 (<strong>vencida</strong>).
++    Pedida confirmación a Matthias, sin respuesta. Precios <strong>orientativos</strong>.
++  </div>
++</div>
+ <script>
+ // Mostrar selector región IT (Italia) o zona UK (Reino Unido) según destino
+ document.addEventListener('change', function(){
+   const dest=document.getElementById('provincia');
+   const wrapRegion=document.getElementById('regionIT_wrap');
+   const wrapUK=document.getElementById('zonaUK_wrap');
++  const wrapFR=document.getElementById('carrierFR_wrap');
+ 
+   if(!dest) return;
+ 
+@@ -208,11 +231,63 @@ document.addEventListener('change', function(){
+   if(wrapRegion) wrapRegion.style.display=esIT?'block':'none';
+   // Zona UK visible cuando destino Reino Unido
+   if(wrapUK) wrapUK.style.display=esUK?'block':'none';
++  // Selector de transportista visible cuando destino Francia (DHL / Dachser, elección manual)
++  const esFR=dest.value==='0'&&destText.includes('Francia');
++  if(wrapFR){
++    wrapFR.style.display=esFR?'block':'none';
++    if(esFR){ poblarZonasFR(); refrescarRecomendacion(); }
++  }
+ 
+   // Zona especial BRT para todos los SKUs en Italia
+   const zonaRow=document.getElementById('zonaEsp_row');
+   if(zonaRow) zonaRow.style.display=esIT?'block':'none';
+ });
++// Al cambiar de marketplace hay que recalcular las previsualizaciones: el cap depende del país.
++document.addEventListener('change', function(e){
++  if(e.target && e.target.id === 'marketplace'){
++    document.querySelectorAll('.linea-pedido').forEach(l =>
++      updatePreview(l.id.replace('linea-','')));
++  }
++});
++// Rellena el desplegable de zonas de Francia desde DACHSER_GRIDS (fuente única).
++function poblarZonasFR(){
++  const sel=document.getElementById('zonaFR');
++  if(!sel||sel.options.length) return;
++  DACHSER_GRIDS.FR.zonas.forEach((z,i)=>{
++    const o=document.createElement('option');
++    o.value=i; o.text=z.z+' — '+z.desc;
++    sel.appendChild(o);
++  });
++  window._zonaFR='0';
++}
++
++// Muestra qué transportista recomienda la tabla de umbrales de la guía y avisa si el elegido
++// a mano no es el más barato.
++function refrescarRecomendacion(){
++  const box=document.getElementById('reco-fr');
++  if(!box) return;
++  const lineas=document.querySelectorAll('.linea-pedido');
++  const partes=[];
++  let discrepancia=false;
++  const elegido=window._carrierFR||'dachser';
++  for(const l of lineas){
++    const id=l.id.replace('linea-','');
++    const k=document.getElementById('sku-'+id)?.value;
++    const u=parseInt(document.getElementById('uds-'+id)?.value)||1;
++    if(!k) continue;
++    const reco=transportistaRecomendado(k,u,'FR');
++    if(reco!==elegido) discrepancia=true;
++    const umbral=(UMBRAL_PALE.FR||{})[k];
++    partes.push(SKUS[k].nombre.split(' — ')[0]+' × '+u+' ud → '+
++      (reco==='dachser'?'Dachser':'DHL')+' (palé desde '+umbral+' ud)');
++  }
++  if(!partes.length){ box.innerHTML='Elige un modelo para ver la recomendación.'; return; }
++  box.innerHTML=(discrepancia
++      ? '<strong style="color:var(--warning)">⚠️ El transportista elegido no es el más barato:</strong><br>'
++      : '<strong style="color:var(--accent2)">✓ Coincide con lo más barato:</strong><br>')
++    + partes.join('<br>');
++}
++
+ function toggleZonaEsp(checked){
+   const sel=document.getElementById('select_zonaEsp');
+   if(sel) sel.style.display=checked?'block':'none';
+@@ -291,7 +366,7 @@ function toggleZonaEsp(checked){
+   <div class="section-label">Canal de devolución</div>
+   <div class="toggle-row" id="devolucion-canal-row">
+     <button class="toggle-btn active" onclick="setDevolucionCanal('amazon')">📦 Etiqueta Amazon</button>
+-    <button class="toggle-btn" onclick="setDevolucionCanal('ontime')">🚚 Recogida Ontime</button>
++    <button class="toggle-btn" onclick="setDevolucionCanal('ontime')">🚚 Recogida transportista</button>
+     <button class="toggle-btn" onclick="setDevolucionCanal('cliente')">👤 Cuenta cliente</button>
+   </div>
+ </div>
+@@ -300,12 +375,28 @@ function toggleZonaEsp(checked){
+ <div class="field">
+   <label>Atribuir a</label>
+   <select id="responsable">
+-    <option value="ontime">Ontime</option>
+-    <option value="oceges">OCEGES</option>
+-    <option value="montelog">Montelog</option>
+-    <option value="masyounger">MASYOUNGER</option>
+-    <option value="cliente">Cliente</option>
+-    <option value="indeterminado">Indeterminado</option>
++    <optgroup label="Transportistas">
++      <option value="ontime">Ontime (ES / PT)</option>
++      <option value="dhl">DHL (FR)</option>
++      <option value="dachser">Dachser (FR)</option>
++      <option value="brt">BRT (IT)</option>
++      <option value="mintsoft">Mintsoft / DPD (UK)</option>
++    </optgroup>
++    <optgroup label="Almacenes y operadores logísticos">
++      <option value="oceges">OCEGES (ES)</option>
++      <option value="montelog">Montelog (IT)</option>
++      <option value="castres">TwinThink Castres (FR)</option>
++      <option value="mcf">MCF (UK)</option>
++    </optgroup>
++    <optgroup label="Proveedor">
++      <option value="masyounger">MASYOUNGER</option>
++    </optgroup>
++    <optgroup label="Otros">
++      <option value="twinthink">TwinThink (interno)</option>
++      <option value="marketplace">Marketplace</option>
++      <option value="cliente">Cliente</option>
++      <option value="indeterminado">Indeterminado</option>
++    </optgroup>
+   </select>
+ </div>
+ 
+@@ -321,7 +412,7 @@ function toggleZonaEsp(checked){
+   <div class="result-row" id="row-reembolso" style="display:none"><span class="result-label">Reembolso al cliente</span><span class="result-value negative" id="r-reembolso">—</span></div>
+   <div class="result-row"><span class="result-label">Comisión marketplace perdida</span><span class="result-value negative" id="r-comision">—</span></div>
+   <div class="result-row" id="row-cuota" style="display:none"><span class="result-label">Cuota fija marketplace (mensual)</span><span class="result-value negative" id="r-cuota">—</span></div>
+-  <div class="result-row" id="row-devolucion" style="display:none"><span class="result-label">Coste etiqueta devolución</span><span class="result-value negative" id="r-devolucion">—</span></div>
++  <div class="result-row" id="row-devolucion" style="display:none"><span class="result-label">Coste devolución (etiqueta o recogida)</span><span class="result-value negative" id="r-devolucion">—</span></div>
+   <div class="divider"></div>
+   <div class="result-row total"><span class="result-label">💸 Coste total incidencia</span><span class="result-value negative" id="r-total">—</span></div>
+   <div class="result-row recovery"><span class="result-label" id="r-lcttm-label">⚖️ Cap LCTTM reclamable (art. 57.1)</span><span class="result-value positive" id="r-lcttm">—</span></div>
+@@ -474,6 +565,297 @@ const UK_TARIFAS={
+   ireland:   14.81    // DPD European Road — ⚠️ capado 30kg, provisional
+ };
+ 
++// ==================================================================================
++// TRANSPORTE DESDE CASTRES (FR-81100) — DACHSER (palés) + DHL EXPRESS (unidad suelta)
++// ==================================================================================
++// Fuentes cargadas el 17/08/2026:
++//   · GUIA-Tarifas-Dachser-TwinThink-2026 (28/07/2026) — guía operativa con todas las grilles
++//   · 1_DACHSER Twin_Think Outbound DAP CP ESPAGNE / ITALIE / PORTUGAL — grilles originales
++//     de Matthias Torbay (27/07/2026), vigencia 01/08/2026 – 31/10/2026
++//   · GUIA-RAPIDA-Transporte-TwinThink (28/07/2026) — precios DHL cerrados por unidad
++// Servicio base: targoflex (B2B), entrega DAP en puerta. Cuenta Dachser 47595284.
++//
++// ⚠️ VIGENCIAS — revisar antes de usar:
++//   · España, Portugal, Italia: 01/08/2026 – 31/10/2026
++//   · Alemania, Bélgica, Países Bajos: hasta 31/10/2026
++//   · FRANCIA: el archivo de tarifa indica 01/04/2026 – 31/05/2026 (VENCIDA). Pedida
++//     confirmación a Matthias, sin respuesta al 28/07. Precios ORIENTATIVOS.
++//   · DHL Express: hasta 31/12/2026
++//
++// ✅ PRESUPUESTOS YA FIRMADOS (confirmado por el responsable ATC el 17/08/2026). La guía marcaba
++//   fecha límite 27/08/2026 para aceptar la oferta y devolver firmadas las CGV y los anexos
++//   tarifarios; el trámite está hecho, así que las grilles de ES, PT e IT quedan en vigor.
++//   Consecuencia: las CGV de Dachser (septiembre 2023) SON el contrato aplicable, y su cláusula
++//   de límite de indemnización prevalece sobre el régimen supletorio. Ver el bloque del cap FR.
++
++// ---- Cómo se calcula el precio Dachser (pasos del propio documento) --------------
++// 1. Peso real   = productos + palé de madera a medida (≈20 kg)
++// 2. Peso volum. = largo × ancho × alto del palé en metros × 150 kg/m³
++// 3. Peso facturable = el mayor de los dos, REDONDEADO HACIA ARRIBA A 10 kg
++// 4. Zona = según código postal de destino
++// 5. Hasta 100 kg → precio fijo por envío. Desde 101 kg → € por cada 100 kg × (peso ÷ 100)
++// 6. Sumar recargos: gasoil + EGR + fijos por envío
++const DACHSER_VOL_FACTOR = 150;      // kg/m³ — aplica en TODAS las grilles, también FR/DE/BE/NL
++const DACHSER_PALE = {
++  largo: 1.71, ancho: 1.03,          // palé a medida de 171 × 103 cm
++  altoBase: 0.14,                    // altura del palé vacío (deducida de la tabla de montaje)
++  kg: 20,                            // ⚠️ estimado — pendiente de pesar uno real
++  coste: 8.00,                       // € por palé de madera a medida
++  gestion: 2.98                      // gestión de palés Europa consignados (por palé)
++};
++// Nº de columnas en que se monta cada referencia. La 001 mide 46 cm de ancho: en un palé de
++// 103 cm sobra medio hueco y siempre factura por volumen. En 2 columnas el coste por unidad
++// baja de 15,83 € a 9,04 € — un 43 % menos. El resto van apiladas en 1 columna.
++const DACHSER_COLUMNAS = { EMD001: 2, SYN007: 1, SYN010: 1, SYN011: 1, EMD003: 1 };
++
++// ---- Recargos (última página de la guía) ----------------------------------------
++const DACHSER_GASOIL   = 0.12;    // barème CNR — variable, orden del 10-13 %, revisión MENSUAL
++const DACHSER_EGR      = 0.0178;  // Emergency Gasoil Recovery — semana 21-27 jul 2026, revisión SEMANAL
++const DACHSER_FIJOS    = 3.63 + 2.18;  // término fijo administrativo (EDI) + sûreté "Risk Fee" = 5,81 €
++const DACHSER_B2C      = 0.30;    // targo on-site: entrega a particular, +30 % MÁS gastos de porte
++const DACHSER_RETORNO  = 0.50;    // devoluciones: tarifa de ida +50 %
++const DACHSER_GMS      = { rate: 2.02, min: 8.38 };  // entrega en GMS/GSB o plataforma logística,
++                                                     // €/100 kg — aplica a Leroy Merlin, Brico Dépôt…
++// Recargos NO cableados todavía (activar si el caso lo pide): gestión de factura 3,50 €/factura ·
++// zona de difícil acceso o gran ciudad europea 6,86 € · cita de entrega por teléfono 15,80 € ·
++// cita automática electrónica 7,90 € · recogida no realizable 36,03 € · anomalía de entrega
++// nacional 35,16 € (mín. 41,15 €) · largo o alto no autorizado 170 € · mercancía peligrosa 18,54 €.
++// El ejemplo oficial de la guía (palé estándar a Madrid = 133,76 €) suma SOLO gasoil + EGR + fijos,
++// así que la gestión de palés Europa (2,98 €) queda fuera del cálculo base para poder cuadrar.
++const DACHSER_GESTION_PALE_ON = false;
++
++// ---- Servicios con recargo sobre la tarifa base ---------------------------------
++// targoflex 0 % (el contratado) · targospeed +15 % · targofix +19 % · targo on-site fix +25 % ·
++// targo on-site +30 % · targo fix/speed 12 +35 % · targospeed 10 +70 %
++
++// ---- Límites físicos ------------------------------------------------------------
++// Largo 2,40 m · ancho 1,80 m · alto 2,20 m (2,30 m en Alemania) · 1.500 kg por bulto.
++// Groupage palé: 100 kg a 4 t, de 1 a 8 palés. Nuestro producto más largo mide 1,71 m: entra
++// sin recargo. El palé estándar de 5 unidades mide 82 cm: caben 2 apilados sin pasar el límite.
++const DACHSER_MAX_KG_BULTO = 1500;
++const DACHSER_MAX_KG_TARIFA = 4000;   // por encima, fuera de tabla → pedir cotización
++
++// ---- Tramos de las grilles ------------------------------------------------------
++// 8 columnas de PRECIO FIJO por envío, después 13 columnas de € POR CADA 100 kg.
++const DACHSER_FORFAIT_LIM = [29, 39, 49, 59, 69, 79, 89, 100];
++const DACHSER_100KG_LIM   = [150, 200, 300, 400, 500, 750, 1000, 1250, 1500, 1750, 2000, 2500, 4000];
++
++// ---- Grilles por país -----------------------------------------------------------
++// Cada zona: 21 importes = 8 de precio fijo + 13 de € por 100 kg. Netos, sin IVA.
++const DACHSER_GRIDS = {
++  FR: { label: 'Francia', clave: 'departamento', zonas: [
++    { z:'Z1',  desc:'31, 47, 81 (Toulouse, Agen, Castres)', t:[29.06,29.94,30.65,31.51,32.22,32.90,33.98,35.68, 31.85,26.16,22.70,20.54,19.02,18.07,17.51,16.96,16.09,15.65,15.22,14.14,12.77] },
++    { z:'Z2',  desc:'11, 32, 33, 46 (Burdeos)',             t:[35.60,36.90,37.93,39.35,40.51,41.65,43.42,45.75, 41.06,34.06,29.86,27.10,25.15,23.96,23.27,22.63,21.46,20.83,20.22,19.12,17.01] },
++    { z:'Z3',  desc:'17, 30, 34, 36, 64, 65, 66, 79, 85',   t:[36.89,38.30,39.38,40.95,42.24,43.52,45.47,47.94, 43.11,35.89,31.54,28.69,26.65,25.41,24.70,24.04,22.79,22.13,21.49,20.40,18.10] },
++    { z:'Z4',  desc:'03, 09, 12, 24, 40, 63, 82',           t:[37.52,38.96,40.12,41.76,43.11,44.45,46.51,49.05, 44.12,36.81,32.41,29.50,27.39,26.16,25.42,24.77,23.49,22.78,22.13,21.04,18.67] },
++    { z:'Z5',  desc:'07, 13, 16, 26, 35, 44, 49, 53, 72, 86 (Marsella, Nantes)', t:[38.39,39.92,41.13,42.89,44.33,45.79,47.99,50.63, 45.62,38.14,33.67,30.65,28.52,27.24,26.48,25.84,24.49,23.78,23.07,22.01,19.51] },
++    { z:'Z6',  desc:'15, 18, 19, 42, 43, 58, 69, 84 (Lyon)', t:[39.65,41.30,42.60,44.56,46.15,47.76,50.16,52.97, 47.85,40.16,35.58,32.46,30.21,28.91,28.13,27.47,26.05,25.27,24.54,23.52,20.78] },
++    { z:'Z7',  desc:'01, 21, 22, 37, 38, 52, 54, 56, 71, 88', t:[40.27,41.98,43.34,45.37,47.04,48.73,51.26,54.16, 48.96,41.18,36.55,33.37,31.08,29.76,28.96,28.31,26.83,26.06,25.27,24.28,21.44] },
++    { z:'Z8',  desc:'10, 28, 41, 45, 89',                   t:[40.85,42.61,43.99,46.16,47.87,49.65,52.29,55.27, 50.01,42.15,37.47,34.25,31.91,30.56,29.78,29.13,27.61,26.81,26.02,25.04,22.11] },
++    { z:'Z9',  desc:'02, 04, 08, 25, 29, 51, 55, 57, 60, 67, 68, 70, 77, 78, 87, 91-95 (periferia París, Estrasburgo)', t:[41.62,43.48,44.92,47.20,49.04,50.93,53.74,56.82, 51.49,43.52,38.79,35.48,33.11,31.73,30.91,30.26,28.70,27.87,27.04,26.10,23.00] },
++    { z:'Z10', desc:'27, 39, 59, 61, 62, 74, 76, 80, 90 (Lille)', t:[42.37,44.31,45.82,48.23,50.19,52.21,55.17,58.37, 52.97,44.90,40.13,36.74,34.30,32.91,32.08,31.42,29.81,28.93,28.08,27.18,23.95] },
++    { z:'Z11', desc:'14, 23, 48, 50, 73, 75, 83 (PARÍS ciudad)', t:[43.77,45.90,47.53,50.24,52.41,54.69,58.00,61.40, 55.91,47.65,42.79,39.28,36.73,35.31,34.46,33.81,32.08,31.14,30.21,29.43,25.86] },
++    { z:'Z12', desc:'05, 06 (Niza)',                        t:[46.09,48.55,50.42,53.69,56.31,59.07,63.04,66.88, 61.24,52.75,47.80,44.06,41.34,39.86,38.96,38.35,36.43,35.36,34.32,33.74,29.57] },
++    { z:'Z13', desc:'20, 98 (Córcega — solo targoflex, sumar aproximación a Marsella dpto. 13)', t:[49.14,52.20,54.49,58.79,62.24,65.89,71.09,75.61, 69.93,61.33,56.40,52.35,49.37,47.82,46.89,46.36,44.09,42.82,41.57,41.49,36.21] }
++  ]},
++  ES: { label: 'España', clave: 'provincia (2 primeras cifras del CP)', zonas: [
++    { z:'Z1', desc:'08 Barcelona', t:[40.62,43.02,44.81,46.86,48.55,50.23,51.92,53.56, 46.62,38.04,31.95,27.57,25.27,23.18,21.87,21.14,20.10,19.44,18.93,18.59,17.26] },
++    { z:'Z2', desc:'12 Castellón, 17 Girona, 22 Huesca, 25 Lleida, 43 Tarragona, 50 Zaragoza', t:[44.89,47.63,49.62,51.94,53.86,55.78,57.71,59.60, 52.04,42.63,35.93,31.16,28.59,26.26,24.83,24.04,22.88,22.15,21.57,21.12,19.60] },
++    { z:'Z3', desc:'01, 02, 03, 13, 19, 20, 26, 28 Madrid, 30, 31, 34, 40, 44, 45, 46 Valencia, 47, 48', t:[49.25,52.36,54.57,57.18,59.36,61.54,63.73,65.90, 57.72,47.49,40.16,35.00,32.16,29.58,28.01,27.18,25.91,25.09,24.44,23.86,22.14] },
++    { z:'Z4', desc:'05, 06, 09, 14, 16, 18, 23, 24, 27, 29 Málaga, 32, 33, 37, 39, 41 Sevilla, 42, 49', t:[53.72,57.22,59.67,62.57,65.04,67.51,69.98,72.46, 63.68,52.62,44.67,39.13,36.00,33.16,31.47,30.60,29.19,28.28,27.55,26.81,24.89] },
++    { z:'Z5', desc:'04, 10, 11, 15 A Coruña, 21, 36 Pontevedra', t:[58.29,62.22,64.92,68.14,70.93,73.70,76.47,79.29, 69.92,58.05,49.46,43.55,40.13,37.01,35.20,34.29,32.76,31.75,30.93,30.01,27.86] }
++  ], noEntrega:'Baleares (07000-07999), Las Palmas (35000-35999), Sta. Cruz de Tenerife (38000-38999), Ceuta (51000-51999) y Melilla (52000-52999) — cotización aparte a Matthias' },
++  PT: { label: 'Portugal', clave: 'prefijo CP', zonas: [
++    { z:'Z1', desc:'40-45 Porto, 47 Braga, 49 Viana do Castelo', t:[47.09,51.01,53.74,56.89,59.56,62.26,64.97,67.63, 60.35,50.80,43.93,39.11,36.47,34.08,32.66,31.87,30.57,29.73,29.06,28.52,26.77] },
++    { z:'Z2', desc:'24 Leiria, 30-32 Coimbra, 37-38 Aveiro, 46+48 Braga', t:[48.66,52.76,55.58,58.87,61.67,64.49,67.33,70.12, 62.66,52.85,45.77,40.83,38.10,35.62,34.16,33.37,32.02,31.14,30.45,29.85,28.01] },
++    { z:'Z3', desc:'10-19 Lisboa, 20-23 Santarém, 25-29 Setúbal/Sintra, 33-36 Coimbra/Viseu, 50-51, 61-64', t:[50.24,54.52,57.46,60.88,63.81,66.76,69.72,72.65, 65.02,54.94,47.65,42.59,39.78,37.21,35.71,34.90,33.51,32.60,31.88,31.21,29.29] },
++    { z:'Z4', desc:'52-54 Bragança, 60 Castelo Branco, 70-79 Évora/Beja, 80-89 Faro/Algarve', t:[53.44,58.10,61.25,64.95,68.15,71.37,74.60,77.84, 69.86,59.25,51.56,46.29,43.27,40.51,38.95,38.14,36.65,35.67,34.88,34.06,31.97] }
++  ], noEntrega:'Madeira y Azores (CP 9000-9999)' },
++  IT: { label: 'Italia', clave: 'provincia (2 primeras cifras del CP)', zonas: [
++    { z:'Z1', desc:'10 Torino, 16 Genova, 20 Milano, 21-29 (norte-oeste)', t:[59.19,62.70,66.35,70.27,73.82,77.36,80.90,84.36, 75.58,63.93,55.55,49.58,46.42,43.53,41.66,40.40,37.86,36.12,34.84,33.73,30.96] },
++    { z:'Z2', desc:'31 Treviso, 35 Padova, 37 Verona, 40 Bologna, 50 Firenze, 55-56, 59', t:[63.61,67.47,71.44,75.72,79.60,83.49,87.38,91.21, 81.93,69.54,60.60,54.31,50.91,47.78,45.80,44.48,41.72,39.84,38.41,37.10,34.05] },
++    { z:'Z3', desc:'00 Roma, 06 Perugia, 30 Venezia, 34 Trieste, 39 Bolzano, 60-67, 81, 86', t:[66.96,71.12,75.31,79.87,84.04,88.20,92.37,96.50, 86.85,73.91,64.56,58.03,54.45,51.14,49.08,47.73,44.79,42.78,41.26,39.78,36.51] },
++    { z:'Z4', desc:'70 Bari, 73 Lecce, 80 Napoli, 84 Salerno, 87-89 (sur)', t:[74.95,79.85,84.62,89.87,94.74,99.59,104.44,109.33, 98.88,84.71,74.38,67.36,63.31,59.57,57.36,55.93,52.59,50.26,48.46,46.53,42.71] },
++    { z:'Z5', desc:'07-09 Cerdeña, 90-98 Sicilia (LAS MÁS CARAS, casi el doble que el norte)', t:[87.90,94.15,99.92,106.37,112.50,118.61,124.70,131.00, 119.48,103.49,91.68,84.05,79.25,74.79,72.34,70.84,66.81,63.91,61.66,58.79,53.96] }
++  ], noEntrega:'lista larga de CP concretos (islas menores y zonas de Venecia, Nápoles y Livorno): 00120, 04020, 04027, 07024, 30010, 30011, 30013, 30015, 30020, 30121-30126, 30131-30133, 30135, 30141-30142, 47890-47899, 57030-57038, 58012, 71040, 80070, 80071, 80073-80077, 80079, 90010, 91017, 91023, 92010, 98050, 98055 — consultar ANTES de aceptar el pedido' },
++  DE: { label: 'Alemania', clave: 'zona CP (D-xx)', zonas: [
++    { z:'Z1', desc:'66', t:[44.99,47.60,49.61,51.93,53.86,55.79,57.73,59.61, 52.06,42.66,36.01,31.25,28.68,26.37,24.99,24.49,23.31,22.50,21.88,21.42,19.77] },
++    { z:'Z2', desc:'40-41, 50-56, 60-61, 64-65, 67-72, 74-79 (Colonia, Fráncfort)', t:[47.50,50.31,52.45,54.94,57.02,59.10,61.19,63.23, 55.33,45.46,38.45,33.46,30.74,28.29,26.84,26.33,25.08,24.23,23.56,23.01,21.25] },
++    { z:'Z3', desc:'35, 42, 44-47, 57-58, 63, 73, 89-91, 97', t:[50.04,53.07,55.34,58.00,60.24,62.48,64.72,66.94, 58.69,48.34,40.98,35.78,32.89,30.29,28.78,28.27,26.93,26.03,25.31,24.68,22.79] },
++    { z:'Z4', desc:'07-08, 30-34, 36-37, 48-49, 59, 80-82, 85-88, 92-93, 95-96, 98-99 (Múnich)', t:[51.75,54.93,57.29,60.06,62.42,64.76,67.12,69.45, 60.98,50.31,42.72,37.37,34.38,31.68,30.12,29.61,28.23,27.29,26.53,25.84,23.86] },
++    { z:'Z5', desc:'01, 04, 06, 09-14, 20-22, 27-29, 38-39, 83-84, 94 (Berlín, Hamburgo)', t:[56.08,59.67,62.26,65.34,67.99,70.63,73.28,75.94, 66.90,55.47,47.28,41.57,38.30,35.33,33.67,33.15,31.65,30.61,29.77,28.91,26.69] },
++    { z:'Z6', desc:'02-03, 15-19, 23-26', t:[60.51,64.51,67.36,70.77,73.74,76.70,79.66,82.68, 73.11,60.91,52.12,46.08,42.51,39.26,37.49,37.01,35.36,34.22,33.28,32.21,29.74] }
++  ]},
++  BE: { label: 'Bélgica', clave: 'tarifa única para todo el país', zonas: [
++    { z:'Z1', desc:'todo el país · 2 a 3 días laborables', t:[53.16,55.54,57.45,59.74,61.62,63.53,65.42,67.33, 58.27,47.09,39.06,33.46,30.31,27.46,25.83,25.14,23.83,22.98,22.29,21.65,19.69] }
++  ]},
++  NL: { label: 'Países Bajos', clave: 'zona CP (NL-xx)', zonas: [
++    { z:'Z1', desc:'22-36, 39-72', t:[56.28,59.32,61.49,64.13,66.32,68.48,70.67,72.81, 63.28,51.48,43.02,37.09,33.78,30.78,29.08,28.40,27.10,26.25,25.56,24.96,22.91] },
++    { z:'Z2', desc:'10-21, 37-38, 73-82, 94-95 (Ámsterdam)', t:[58.11,61.30,63.56,66.32,68.62,70.88,73.18,75.44, 65.66,53.51,44.78,38.69,35.26,32.15,30.40,29.70,28.36,27.48,26.76,26.09,23.96] },
++    { z:'Z3', desc:'83-93, 96-99', t:[59.95,63.30,65.65,68.52,70.94,73.31,75.72,78.12, 68.08,55.59,46.60,40.34,36.79,33.55,31.76,31.06,29.67,28.75,28.00,27.27,25.03] }
++  ]}
++};
++
++// ---- DHL EXPRESS — precio cerrado por unidad, puerta a puerta, sin IVA ----------
++// Fuente: GUIA-RAPIDA-Transporte-TwinThink (28/07/2026). Cuenta 227646461, Sadat Sabani.
++// Vigente hasta 31/12/2026. Máximo 70 kg por bulto. NO cubre Portugal ni Países Bajos.
++// Plazos: Francia día siguiente · España, Italia, Alemania y Bélgica 2-4 días.
++const DHL_TARIFAS = {
++  EMD001: { FR:34, ES:42, IT:42, DE:42, BE:42 },
++  SYN007: { FR:53, ES:48, IT:48, DE:48, BE:48 },
++  SYN010: { FR:58, ES:51, IT:51, DE:51, BE:51 },
++  SYN011: { FR:81, ES:62, IT:62, DE:62, BE:62 },
++  EMD003: { FR:84, ES:64, IT:64, DE:64, BE:64 }
++};
++const DHL_MAX_KG = 70;
++const DHL_SIN_COBERTURA = ['PT', 'NL'];
++
++// ---- A partir de cuántas unidades compensa el palé ------------------------------
++// Tabla de la guía rápida. Por debajo del umbral sale más barato DHL; a partir de él, Dachser.
++// Las dos excepciones que hay que saberse: 003 y 011 hacia Francia ya salen más baratas por
++// Dachser con UNA sola unidad (DHL cobra 84 € y 81 €, contra 72 € del palé). Y al revés, las
++// ligeras 001 y 007 hacia Italia necesitan 3 unidades, porque Italia es el destino más caro.
++const UMBRAL_PALE = {
++  FR: { EMD003:1, SYN011:1, SYN010:2, SYN007:2, EMD001:2 },
++  ES: { EMD003:2, SYN011:2, SYN010:2, SYN007:2, EMD001:2 },
++  IT: { EMD003:2, SYN011:2, SYN010:2, SYN007:3, EMD001:3 },
++  DE: { EMD003:2, SYN011:2, SYN010:2, SYN007:2, EMD001:2 },
++  BE: { EMD003:2, SYN011:2, SYN010:2, SYN007:2, EMD001:2 },
++  PT: { EMD003:1, SYN011:1, SYN010:1, SYN007:1, EMD001:1 },   // DHL no cubre → siempre Dachser
++  NL: { EMD003:1, SYN011:1, SYN010:1, SYN007:1, EMD001:1 }
++};
++
++// ---- Motor de cálculo Dachser ---------------------------------------------------
++// Peso facturable del palé. Verificado contra la tabla de montaje de la guía:
++//   003 × 5 → real 275,8 kg · vol 216 kg · alto 82 cm · facturable 280 kg  ✓
++//   003 × 1 → real 71 kg · vol 74 kg · alto 28 cm · facturable 80 kg       ✓
++//   001 × 1 → real 41 kg · vol 64 kg · alto 24 cm · facturable 70 kg       ✓
++// ---- Pesos y grosores que declara DACHSER --------------------------------------
++// ⚠️ NO COINCIDEN con el catálogo QIMA que usa el resto de la calculadora. La diferencia es
++// pequeña por unidad pero cambia el peso FACTURABLE, porque Dachser redondea hacia arriba de
++// 10 en 10 kg y a veces cae al otro lado del escalón:
++//
++//   Ref.   QIMA (catálogo)   Dachser (tarifa)   Palé de 5 uds facturable
++//   001    20,10 kg          20,60 kg           —
++//   007    33,15 kg          33,55 kg           190 kg  /  190 kg
++//   010    36,10 kg          36,55 kg           210 kg  /  210 kg
++//   011    49,65 kg          50,20 kg           270 kg  /  280 kg   ← 3,6 % de diferencia
++//   003    50,85 kg          51,15 kg           280 kg  /  280 kg
++//
++// Para el FLETE manda lo que factura el transportista, así que el motor usa los pesos de
++// Dachser. El peso QIMA se sigue usando para el cap reclamable, que va sobre el peso real de
++// la mercancía. Habría que averiguar de dónde sale la diferencia (¿embalaje?, ¿otra medición?)
++// y unificar: si Dachser factura sistemáticamente de más, es reclamable.
++const DACHSER_SKU = {
++  EMD001: { peso: 20.60, grosor: 0.100 },   // 1710 ×  460 × 100 mm
++  SYN007: { peso: 33.55, grosor: 0.110 },   // 1710 ×  860 × 110 mm
++  SYN010: { peso: 36.55, grosor: 0.110 },   // 1710 ×  860 × 110 mm
++  SYN011: { peso: 50.20, grosor: 0.135 },   // 1710 × 1025 × 135 mm
++  EMD003: { peso: 51.15, grosor: 0.135 }    // 1710 × 1025 × 135 mm
++};
++
++function dachserPesoFacturable(skuKey, uds){
++  const d = DACHSER_SKU[skuKey] || { peso: SKUS[skuKey].peso, grosor: SKUS[skuKey].dim[2]/100 };
++  const cols = DACHSER_COLUMNAS[skuKey] || 1;
++  const capas = Math.ceil(uds / cols);
++  const alto = DACHSER_PALE.altoBase + capas * d.grosor;
++  const real = uds * d.peso + DACHSER_PALE.kg;
++  const volum = DACHSER_PALE.largo * DACHSER_PALE.ancho * alto * DACHSER_VOL_FACTOR;
++  const manda = Math.max(real, volum);
++  return {
++    pesoFact: Math.ceil(manda / 10) * 10,       // redondeo hacia arriba a 10 kg
++    real: real, volum: volum, alto: alto,
++    porVolumen: volum > real
++  };
++}
++
++// Precio base de tabla (neto, sin recargos). Devuelve null si el peso se sale de la tarifa.
++function dachserPrecioBase(pais, zonaIdx, pesoFact){
++  const grid = DACHSER_GRIDS[pais];
++  if(!grid) return null;
++  const zona = grid.zonas[zonaIdx];
++  if(!zona) return null;
++  for(let i = 0; i < DACHSER_FORFAIT_LIM.length; i++){
++    if(pesoFact <= DACHSER_FORFAIT_LIM[i])
++      return { importe: zona.t[i], modo: 'fijo por envío' };
++  }
++  for(let j = 0; j < DACHSER_100KG_LIM.length; j++){
++    if(pesoFact <= DACHSER_100KG_LIM[j])
++      return { importe: zona.t[8 + j] * pesoFact / 100, modo: '€/100 kg' };
++  }
++  return null;   // > 4.000 kg: fuera de tabla, pedir cotización
++}
++
++// Coste total Dachser de UN envío (un palé con `uds` unidades del mismo SKU).
++// Orden de aplicación verificado con el ejemplo oficial de la guía (palé estándar a Madrid):
++//   112,45 base + 12 % gasoil (13,49) + 1,78 % EGR (2,00) + 5,81 fijos = 133,76 €
++function dachserEnvio(skuKey, uds, pais, zonaIdx, opts){
++  opts = opts || {};
++  const pf = dachserPesoFacturable(skuKey, uds);
++  const base0 = dachserPrecioBase(pais, zonaIdx, pf.pesoFact);
++  if(!base0){ window._dachserFueraTarifa = true; return null; }
++
++  let base = base0.importe;
++  if(opts.b2c)     base *= (1 + DACHSER_B2C);       // targo on-site +30 % (+ gastos de porte aparte)
++  if(opts.retorno) base *= (1 + DACHSER_RETORNO);   // devolución: ida +50 %
++
++  let total = base * (1 + DACHSER_GASOIL + DACHSER_EGR) + DACHSER_FIJOS;
++  if(DACHSER_GESTION_PALE_ON) total += DACHSER_PALE.gestion;
++  // Entrega en gran superficie o plataforma logística (Leroy Merlin, Brico Dépôt…)
++  if(opts.gms) total += Math.max(DACHSER_GMS.min, DACHSER_GMS.rate * pf.pesoFact / 100);
++
++  return { total: total, porUd: total / uds, pesoFact: pf.pesoFact, modo: base0.modo,
++           porVolumen: pf.porVolumen, alto: pf.alto };
++}
++
++// Coste DHL de `uds` unidades sueltas (precio cerrado por unidad).
++function dhlEnvio(skuKey, uds, pais){
++  if(DHL_SIN_COBERTURA.indexOf(pais) !== -1){ window._dhlSinCobertura = true; return null; }
++  const fila = DHL_TARIFAS[skuKey];
++  const precio = fila && fila[pais];
++  if(precio === undefined){ window._dhlSinCobertura = true; return null; }
++  if(SKUS[skuKey].peso > DHL_MAX_KG){ window._dhlExcedePeso = true; return null; }
++  return { total: precio * uds, porUd: precio };
++}
++
++// Transportista recomendado según la tabla de umbrales de la guía.
++function transportistaRecomendado(skuKey, uds, pais){
++  const umbral = (UMBRAL_PALE[pais] || {})[skuKey];
++  if(umbral === undefined) return 'dachser';
++  return uds >= umbral ? 'dachser' : 'dhl';
++}
++
++// ---- Cap reclamable Francia -----------------------------------------------------
++// Transporte INTERIOR francés (Castres → cliente francés): contrat type général,
++// décret 2017-461 → 33 €/kg con tope de 1.000 € POR BULTO.
++// Sustituye a los 10 €/kg (CMR) que estaban cargados: el CMR rige el transporte
++// INTERNACIONAL, no un trayecto nacional. Con SYN.011 (49,65 kg) el cap pasa de 496,50 €
++// a 1.000 €/bulto — se estaba reclamando la mitad de lo que corresponde.
++// ⚠️⚠️ ATENCIÓN — ESTE VALOR PUEDE ESTAR DE MÁS. El contrat type général es régimen SUPLETORIO:
++// solo rige cuando NO hay contrato escrito que diga otra cosa. Las CGV de Dachser de septiembre
++// 2023 YA ESTÁN FIRMADAS (17/08/2026), así que son el contrato aplicable y su cláusula de límite
++// de indemnización prevalece. Si esas CGV fijan un límite inferior a 33 €/kg —lo habitual en las
++// condiciones generales de un transportista— este cap está inflado y las reclamaciones se
++// calcularán por encima de lo recuperable. HAY QUE LEER LA CLÁUSULA DE RESPONSABILIDAD DE LAS
++// CGV FIRMADAS Y CORREGIR ESTE NÚMERO. El documento no está en el proyecto.
++const FR_CAP_KG    = 33.00;
++const FR_CAP_BULTO = 1000.00;
++// ⚠️ Plazo de reservas motivadas en Francia: 3 DÍAS (Code de commerce) — el más corto de los
++// cuatro mercados (ES 7 · IT 8 · UK 7). Vigilar en el flujo de siniestros FR.
++const FR_PLAZO_RESERVAS_DIAS = 3;
++
++// ---- ⚠️ DECISIÓN PENDIENTE: ¿Castres sustituye a Ontime (ES/PT) y BRT (IT)? -----
++// Las grilles nuevas de Dachser cubren España, Portugal e Italia DESDE CASTRES, pero la
++// calculadora sigue costeando esos destinos con Ontime (ES/PT) y BRT (IT), que salen del
++// almacén español y del italiano. No consta en ninguna fuente si Castres los sustituye o
++// convive con ellos, así que NO se ha tocado esa lógica.
++// Poniendo esto en true, ES/PT/IT pasan a costearse por Castres con Dachser/DHL:
++const CASTRES_SUSTITUYE_ES_PT_IT = false;
++// ⚠️ Si se activa, hay que revisar TAMBIÉN el cap reclamable de esos mercados: un envío de
++// Castres a cliente español o italiano es transporte INTERNACIONAL, así que aplicaría el
++// CMR (8,33 DEG/kg ≈ 10-12 €/kg) y no la LCTTM española (6,67 €/kg) ni la cobertura
++// italiana de BRT (6,20 €/kg). Para Italia el CMR sería MEJOR que lo que hay hoy.
++
+ const LANDED=1.35,TC=0.92;
+ let tipo='retraso',resolucion='reenvio',cliente='b2b',devActiva=false,devCanal='amazon',lineaCount=0,resLineas=[];
+ 
+@@ -528,21 +910,54 @@ function autoFOB(id){
+   updatePreview(id);
+ }
+ 
++// ============ CAP RECLAMABLE POR MERCADO — fuente única de verdad ============
++// La usan TANTO la previsualización de cada línea como el desglose final, para que no puedan
++// volver a divergir (antes la previsualización aplicaba 6,67 €/kg a todos los mercados).
++function capReclamable(s, mp, u){
++  u = u || 1;
++  if(mp === 'amazon_es' || mp === 'amazon_pt')
++    return { importe: s.peso*6.67*u,
++             label: 'Cap LCTTM reclamable (art. 57.1)', show: true };
++  if(mp === 'amazon_it')
++    return { importe: s.peso*6.20*u,
++             label: 'Cap reclamable BRT (assicurazione AC BASE €6,20/kg — requiere mandato)', show: true };
++  if(mp === 'amazon_fr')
++    // contrat type général (décret 2017-461): 33 €/kg con tope de 1.000 € POR BULTO
++    return { importe: Math.min(s.peso*FR_CAP_KG, FR_CAP_BULTO)*u,
++             label: 'Cap reclamable FR (contrat type général — 33 €/kg, tope 1.000 €/bulto)', show: true };
++  if(mp === 'amazon_uk')
++    return { importe: 50.00*u,
++             label: 'Cap reclamable DPD UK (estándar £50/paquete — verificar cobertura extendida)', show: true };
++  return { importe: 0, label: 'Cap reclamable: pendiente de definir', show: false };
++}
++
+ function updatePreview(id){
+   const k=document.getElementById('sku-'+id).value;
+   const u=parseInt(document.getElementById('uds-'+id).value)||1;
+-  if(k&&SKUS[k])document.getElementById('lp-'+id).textContent='LCTTM: '+fmt(SKUS[k].peso*6.67*u);
++  const mpSel=document.getElementById('marketplace')?.value||'';
++  if(k&&SKUS[k])document.getElementById('lp-'+id).textContent='Cap: '+fmt(capReclamable(SKUS[k],mpSel,u).importe);
++  if(typeof refrescarRecomendacion==='function') refrescarRecomendacion();
+ }
+ 
+ function setTipo(t){tipo=t;document.querySelectorAll('#tipo-row .toggle-btn').forEach(b=>b.classList.toggle('active',(t==='retraso'&&b.textContent.includes('Retraso'))||(t==='dano'&&b.textContent.includes('Daño'))||(t==='perdida'&&b.textContent.includes('Pérdida'))||(t==='defecto'&&b.textContent.includes('Defecto'))));}
+ function setResolucion(r){resolucion=r;document.querySelectorAll('#resolucion-row .toggle-btn').forEach(b=>b.classList.toggle('active',(r==='reenvio'&&b.textContent.includes('Reenvío'))||(r==='reembolso'&&b.textContent.includes('Reembolso'))||(r==='sin_accion'&&b.textContent.includes('Sin acción'))));document.getElementById('slider-reembolso').style.display=r==='reembolso'?'block':'none';}
+ function setCliente(c){cliente=c;document.querySelectorAll('#cliente-row .toggle-btn').forEach(b=>b.classList.toggle('active',(c==='b2c'&&b.textContent.includes('B2C'))||(c==='b2b'&&b.textContent.includes('B2B'))));}
+ function toggleDevolucion(){devActiva=!devActiva;document.getElementById('toggle-devolucion').classList.toggle('active',devActiva);document.getElementById('devolucion-options').style.display=devActiva?'block':'none';}
+-function setDevolucionCanal(c){devCanal=c;document.querySelectorAll('#devolucion-canal-row .toggle-btn').forEach(b=>b.classList.toggle('active',(c==='amazon'&&b.textContent.includes('Amazon'))||(c==='ontime'&&b.textContent.includes('Ontime'))||(c==='cliente'&&b.textContent.includes('cliente'))));}
++function setDevolucionCanal(c){devCanal=c;document.querySelectorAll('#devolucion-canal-row .toggle-btn').forEach(b=>b.classList.toggle('active',(c==='amazon'&&b.textContent.includes('Amazon'))||(c==='ontime'&&b.textContent.includes('transportista'))||(c==='cliente'&&b.textContent.includes('cliente'))));}
+ 
+-function costeEtiqueta(skuKey){
++function costeEtiqueta(skuKey, uds){
++  uds=uds||1;
+   if(devCanal==='cliente')return 0;
+   if(devCanal==='amazon')return SKUS[skuKey]?.factor50?11.00:8.50;
++  // Recogida por el transportista. En Francia la hace Dachser y la cobra a tarifa de ida
++  // +50 % (cláusula de devoluciones), no al precio de la etiqueta de Amazon.
++  const destSel=document.getElementById('provincia');
++  const destText=destSel?.options[destSel.selectedIndex]?.text||'';
++  if(destText.includes('Francia')){
++    const zi=parseInt(window._zonaFR||'0');
++    const r=dachserEnvio(skuKey,uds,'FR',zi,{b2c:cliente==='b2c',retorno:true});
++    if(r){ window._devDachser=true; return r.porUd; }
++  }
+   const prov=parseFloat(document.getElementById('provincia').value)||11.58;
+   return SKUS[skuKey]?.factor50?prov*1.18:prov;
+ }
+@@ -581,6 +996,15 @@ function calcular(){
+   const lineas=document.querySelectorAll('.linea-pedido');
+   if(!lineas.length){alert('Añade al menos un modelo.');return;}
+ 
++  window._frTarifaPendiente=false;
++  window._brtPalletIslandPending=false;
++  window._frSinTarifa=false;
++  window._dachserPorVolumen=false;
++  window._dachserFueraTarifa=false;
++  window._dhlSinCobertura=false;
++  window._dhlExcedePeso=false;
++  window._devDachser=false;
++  window._frDetalle=[];
+   let tProd=0,tEnvio=0,tLCTTM=0,tPVP=0,tComision=0;
+ let lcttm=0,lcttmLabel='',lcttmShow=false;
+   resLineas=[];
+@@ -601,6 +1025,7 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
+     const destText=destSel.options[destSel.selectedIndex]?.text||'';
+     const esIT=(mp==='amazon_it')||(prov===0&&destText.includes('Italia'));
+     const esUK=destText.includes('Reino Unido');
++    const esFR=(mp==='amazon_fr')||(prov===0&&destText.includes('Francia'));
+ 
+     if(esIT){
+       const reg=window._regionIT;
+@@ -628,6 +1053,28 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
+     } else if(esUK){
+       const zu=window._zonaUK||'mainland';
+       tarifa=UK_TARIFAS[zu]!==undefined?UK_TARIFAS[zu]:UK_TARIFAS.mainland;
++    } else if(esFR){
++      // Francia: sale de Castres. Dachser (palé) o DHL Express (unidad suelta), a elección.
++      // NOTA: el modelo supone UN palé por línea de pedido. Si un envío real agrupa varios
++      // SKU distintos en el mismo palé, el coste sale algo por encima del real.
++      const carrier=window._carrierFR||'dachser';
++      const zi=parseInt(window._zonaFR||'0');
++      const opts={ b2c: cliente==='b2c', gms: (mp==='leroy'||mp==='brico') };
++      const r = carrier==='dhl' ? dhlEnvio(k,u,'FR') : dachserEnvio(k,u,'FR',zi,opts);
++      if(r){
++        tarifa=r.porUd;
++        if(r.porVolumen) window._dachserPorVolumen=true;
++      } else {
++        tarifa=0; window._frSinTarifa=true;
++      }
++      // Guardar el detalle para el desglose
++      window._frDetalle=window._frDetalle||[];
++      window._frDetalle.push({
++        sku:s.nombre.split(' — ')[0], u:u, carrier:carrier,
++        pesoFact:r&&r.pesoFact, modo:r&&r.modo, porVolumen:r&&r.porVolumen,
++        alto:r&&r.alto, porUd:r?r.porUd:0,
++        reco:transportistaRecomendado(k,u,'FR')
++      });
+     } else {
+       tarifa=s.factor50?prov*1.18:prov;
+     }
+@@ -637,11 +1084,8 @@ let lcttm=0,lcttmLabel='',lcttmShow=false;
+     const comLinea=pvpN*comRate;
+ 
+     const prod=(fob+flete)*LANDED;
+-    if(mp==='amazon_es'||mp==='amazon_pt'){lcttm=s.peso*6.67*u;lcttmLabel='Cap LCTTM reclamable (art. 57.1)';lcttmShow=true;}
+-else if(mp==='amazon_it'){lcttm=s.peso*6.20*u;lcttmLabel='Cap reclamable BRT (assicurazione AC BASE €6,20/kg — requiere mandato)';lcttmShow=true;}
+-else if(mp==='amazon_fr'){lcttm=s.peso*10.00*u;lcttmLabel='Cap reclamable DHL FR (CMR ~8.33 SDR/kg)';lcttmShow=true;}
+-else if(mp==='amazon_uk'){lcttm=50.00*u;lcttmLabel='Cap reclamable DPD UK (estándar £50/paquete — verificar cobertura extendida)';lcttmShow=true;}
+-else{lcttm=0;lcttmLabel='Cap reclamable: pendiente de definir';lcttmShow=false;}
++    const cap=capReclamable(s,mp,u);
++    lcttm=cap.importe; lcttmLabel=cap.label; lcttmShow=cap.show;
+     tProd+=prod*u;tEnvio+=tarifa*u;tLCTTM+=lcttm;tPVP+=pvpN*u;tComision+=comLinea*u;
+     resLineas.push({nombre:s.nombre,u,pvpN:pvpN*u,prod:prod*u,envio:tarifa*u,lcttm,comRate});
+   }
+@@ -657,7 +1101,7 @@ else{lcttm=0;lcttmLabel='Cap reclamable: pendiente de definir';lcttmShow=false;}
+       const id=l.id.replace('linea-','');
+       const k=document.getElementById('sku-'+id)?.value;
+       const u=parseInt(document.getElementById('uds-'+id)?.value)||1;
+-      if(k)devTotal+=costeEtiqueta(k)*u;
++      if(k)devTotal+=costeEtiqueta(k,u)*u;
+     }
+   }
+ 
+@@ -667,6 +1111,35 @@ else{lcttm=0;lcttmLabel='Cap reclamable: pendiente de definir';lcttmShow=false;}
+   const resEl=document.getElementById('lineas-resumen');
+   resEl.innerHTML='<div style="font-size:10px;font-family:DM Mono,monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Líneas del pedido</div>';
+   resLineas.forEach(l=>resEl.innerHTML+=`<div class="linea-resumen-row"><span>${l.nombre} × ${l.u} ud.</span><span>PVP ${fmt(l.pvpN)} | Com. ${(l.comRate*100).toFixed(1)}% | LCTTM ${fmt(l.lcttm)}</span></div>`);
++  // Detalle del cálculo de Francia (peso facturable, tramo aplicado, recomendación)
++  if(window._frDetalle&&window._frDetalle.length){
++    const d=window._frDetalle.map(x=>{
++      if(x.carrier==='dhl') return `${x.sku} × ${x.u} ud · DHL Express · ${fmt(x.porUd)}/ud (precio cerrado)`;
++      return `${x.sku} × ${x.u} ud · Dachser · palé de ${Math.round(x.alto*100)} cm · peso facturable ${x.pesoFact} kg (${x.porVolumen?'manda el VOLUMEN — el palé va poco cargado':'manda el peso real'}) · tarifa ${x.modo} · ${fmt(x.porUd)}/ud`;
++    }).join('<br>');
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);font-size:11px;line-height:1.6;color:var(--text2)"><strong style="color:var(--text)">CÁLCULO DEL ENVÍO — CASTRES</strong><br>${d}<br><span style="color:var(--text3)">Dachser incluye gasoil ${(DACHSER_GASOIL*100).toFixed(0)} %, EGR ${(DACHSER_EGR*100).toFixed(2)} % y ${fmt(DACHSER_FIJOS)} de fijos por envío. Sin IVA.</span></div>`;
++  }
++  if(window._dachserPorVolumen){
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--warning);border-radius:6px;background:rgba(255,170,0,.10);font-size:12px;line-height:1.5;color:var(--warning)"><strong>⚠️ SE ESTÁ PAGANDO AIRE</strong><br>El palé factura por volumen y no por peso: ocupa más metros cúbicos de lo que pesa. Dachser cuenta 150 kg por m³. Añadir unidades al mismo palé baja mucho el coste unitario — y la ref. 001 hay que montarla siempre en 2 columnas (43 % más barata por unidad).</div>`;
++  }
++  if(window._devDachser){
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--warning);border-radius:6px;background:rgba(255,170,0,.10);font-size:12px;line-height:1.5;color:var(--warning)"><strong>⚠️ DEVOLUCIÓN POR DACHSER = IDA +50 %</strong><br>El retorno de mercancía se factura a la tarifa de ida incrementada un 50 %, no al precio de una etiqueta de Amazon. Ya está aplicado en el coste de devolución.</div>`;
++  }
++  if(window._dhlSinCobertura){
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--danger);border-radius:6px;background:rgba(255,68,68,.10);font-size:12px;line-height:1.5;color:var(--danger)"><strong>⚠️ DHL NO CUBRE ESTE DESTINO</strong><br>DHL Express no da servicio a Portugal ni Países Bajos. Hay que ir por Dachser. El envío figura como 0,00 €.</div>`;
++  }
++  if(window._dhlExcedePeso){
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--danger);border-radius:6px;background:rgba(255,68,68,.10);font-size:12px;line-height:1.5;color:var(--danger)"><strong>⚠️ SUPERA EL MÁXIMO DE DHL</strong><br>DHL no acepta bultos de más de ${DHL_MAX_KG} kg. Hay que ir por Dachser.</div>`;
++  }
++  if(window._dachserFueraTarifa){
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--danger);border-radius:6px;background:rgba(255,68,68,.10);font-size:12px;line-height:1.5;color:var(--danger)"><strong>⚠️ PESO FUERA DE TARIFA</strong><br>La grille de Dachser llega hasta ${DACHSER_MAX_KG_TARIFA} kg facturables. Por encima hay que pedir cotización a Matthias. El envío figura como 0,00 €.</div>`;
++  }
++  if(window._frSinTarifa){
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--danger);border-radius:6px;background:rgba(255,68,68,.10);font-size:12px;line-height:1.5;color:var(--danger)"><strong>⚠️ ENVÍO NO CALCULADO</strong><br>No se ha podido determinar la tarifa. <strong>El total está infravalorado</strong> — no usar para reporting.</div>`;
++  }
++  if(window._brtPalletIslandPending){
++    resEl.innerHTML+=`<div style="margin-top:10px;padding:10px;border:1px solid var(--warning);border-radius:6px;background:rgba(255,170,0,.10);font-size:12px;line-height:1.5;color:var(--warning)"><strong>⚠️ PALET A ISLAS (IT) — PRECIO NO CONFIRMADO</strong><br>BRT no ha facilitado el precio de palet a Sicilia, Sardegna o Calabria. Se está aplicando la tarifa nacional: el envío real será mayor.</div>`;
++  }
+ 
+   document.getElementById('r-coste-producto').textContent=fmt(tProd);
+   document.getElementById('r-envio').textContent=fmt(tEnvio);
+-- 
+2.43.0
 
-<div class="section-label">Líneas del pedido</div>
-<div class="lineas-container" id="lineas-container"></div>
-<button class="add-linea-btn" onclick="addLinea()">+ Añadir otro modelo</button>
-
-<div class="field" style="margin-bottom:10px">
-  <label>Flete China → ES (€/ud, aplica a todos)</label>
-  <input type="number" id="flete" placeholder="8.80" step="0.01" value="8.80">
-  <div class="hint">Estimación FCL ~3.000€ / 341 uds. Ajustar si el pedido tiene volumen muy diferente.</div>
-</div>
-
-<div class="section-label">Tipo de incidencia</div>
-<div class="toggle-row" id="tipo-row">
-  <button class="toggle-btn active" onclick="setTipo('retraso')">⏱ Retraso</button>
-  <button class="toggle-btn" onclick="setTipo('dano')">📦 Daño</button>
-  <button class="toggle-btn" onclick="setTipo('perdida')">❌ Pérdida</button>
-  <button class="toggle-btn" onclick="setTipo('defecto')">🔧 Defecto</button>
-</div>
-
-<div class="section-label">Resolución</div>
-<div class="toggle-row" id="resolucion-row">
-  <button class="toggle-btn active" onclick="setResolucion('reenvio')">🔄 Reenvío</button>
-  <button class="toggle-btn" onclick="setResolucion('reembolso')">💶 Reembolso</button>
-  <button class="toggle-btn" onclick="setResolucion('sin_accion')">✓ Sin acción</button>
-</div>
-
-<div id="slider-reembolso" class="slider-field" style="display:none">
-  <div class="slider-header">
-    <label>Porcentaje de reembolso</label>
-    <span class="slider-value" id="pct-value">100%</span>
-  </div>
-  <input type="range" id="pct-reembolso" min="0" max="100" step="5" value="100"
-    oninput="document.getElementById('pct-value').textContent=this.value+'%'">
-</div>
-
-<div class="section-label">¿Hay devolución física del producto?</div>
-<div class="toggle-switch" id="toggle-devolucion" onclick="toggleDevolucion()">
-  <div class="toggle-switch-label">Devolución física<span>El cliente devuelve el producto</span></div>
-  <div class="switch"></div>
-</div>
-<div id="devolucion-options" style="display:none">
-  <div class="section-label">Canal de devolución</div>
-  <div class="toggle-row" id="devolucion-canal-row">
-    <button class="toggle-btn active" onclick="setDevolucionCanal('amazon')">📦 Etiqueta Amazon</button>
-    <button class="toggle-btn" onclick="setDevolucionCanal('ontime')">🚚 Recogida Ontime</button>
-    <button class="toggle-btn" onclick="setDevolucionCanal('cliente')">👤 Cuenta cliente</button>
-  </div>
-</div>
-
-<div class="section-label">Responsable del problema</div>
-<div class="field">
-  <label>Atribuir a</label>
-  <select id="responsable">
-    <option value="ontime">Ontime</option>
-    <option value="oceges">OCEGES</option>
-    <option value="montelog">Montelog</option>
-    <option value="masyounger">MASYOUNGER</option>
-    <option value="cliente">Cliente</option>
-    <option value="indeterminado">Indeterminado</option>
-  </select>
-</div>
-
-<button class="calc-btn" onclick="calcular()">→ Calcular coste total del pedido</button>
-
-<div class="results" id="results">
-  <div class="results-header">Desglose de costes del pedido</div>
-  <div class="lineas-resumen" id="lineas-resumen"></div>
-  <div class="result-row"><span class="result-label">Coste total producto(s)</span><span class="result-value negative" id="r-coste-producto">—</span></div>
-  <div class="result-row"><span class="result-label">Coste envío original</span><span class="result-value negative" id="r-envio">—</span></div>
-  <div class="result-row" id="row-reenvio-envio" style="display:none"><span class="result-label">Coste reenvío — envío</span><span class="result-value negative" id="r-reenvio-envio">—</span></div>
-  <div class="result-row" id="row-reenvio-producto" style="display:none"><span class="result-label">Coste reenvío — producto</span><span class="result-value negative" id="r-reenvio-producto">—</span></div>
-  <div class="result-row" id="row-reembolso" style="display:none"><span class="result-label">Reembolso al cliente</span><span class="result-value negative" id="r-reembolso">—</span></div>
-  <div class="result-row"><span class="result-label">Comisión marketplace perdida</span><span class="result-value negative" id="r-comision">—</span></div>
-  <div class="result-row" id="row-cuota" style="display:none"><span class="result-label">Cuota fija marketplace (mensual)</span><span class="result-value negative" id="r-cuota">—</span></div>
-  <div class="result-row" id="row-devolucion" style="display:none"><span class="result-label">Coste etiqueta devolución</span><span class="result-value negative" id="r-devolucion">—</span></div>
-  <div class="divider"></div>
-  <div class="result-row total"><span class="result-label">💸 Coste total incidencia</span><span class="result-value negative" id="r-total">—</span></div>
-  <div class="result-row recovery"><span class="result-label" id="r-lcttm-label">⚖️ Cap LCTTM reclamable (art. 57.1)</span><span class="result-value positive" id="r-lcttm">—</span></div>
-  <div class="result-row recovery"><span class="result-label">💰 Coste neto tras reclamación</span><span class="result-value" id="r-neto">—</span></div>
-  <div class="tags">
-    <span class="tag" id="t-responsable">—</span>
-    <span class="tag" id="t-tipo">—</span>
-    <span class="tag" id="t-resolucion">—</span>
-    <span class="tag" id="t-cliente">—</span>
-  </div>
-</div>
-
-<button class="copy-btn" id="copy-btn" onclick="copiarClickUp()" style="display:none">📋 Copiar resumen para ClickUp</button>
-
-<script>
-// Pesos brutos y medidas de caja VERIFICADOS por QIMA (PSI 1671646, 14/01/2026)
-const SKUS={
-  EMD001:{nombre:'EMD.001 — 4P Slim',peso:20.10,dim:[170.7,46,10.2],tasable:40,factor50:false,fob:29.0},
-  SYN007:{nombre:'SYN.007 — 2P',peso:33.15,dim:[171,86,11.2],tasable:40,factor50:false,fob:43.4},
-  SYN010:{nombre:'SYN.010 — 4P',peso:36.10,dim:[171,86,11.5],tasable:40,factor50:false,fob:45.4},
-  SYN011:{nombre:'SYN.011 — 6P Palet',peso:49.65,dim:[170.5,103,13.5],tasable:50,factor50:true,fob:61.4},
-  EMD003:{nombre:'EMD.003 — 12P Palet',peso:50.85,dim:[171,103,13.5],tasable:50,factor50:true,fob:73.4},
-};
-
-// Comisiones reales verificadas por marketplace
-// Fuente: Amazon Seller Central — 19/05/2026
-// NOTA: Comisiones escalonadas FR/DE/UK/ES:
-//   15% sobre precio <= 200€ (o <=175£ en UK)
-//   10% sobre precio > 200€ (o >175£ en UK)
-// DST 3% adicional sobre comisión (domicilio ES)
-// Función calcComision() gestiona el escalonado
-const COMISIONES={
-  amazon_es:{
-    EMD001:0.1815,SYN007:0.1815,
-    SYN010:0.1773,SYN011:0.16,
-    EMD003:0.1815,default:0.1815,
-    escalonado:true,umbral:200,
-    tramo1:0.15,tramo2:0.10,dst:0.03
-  },
-  amazon_it:{
-    EMD001:0.156,SYN007:0.15,
-    SYN010:0.1502,SYN011:0.139,
-    EMD003:0.15,default:0.15,
-    dst:0.03
-  },
-  amazon_pt:{
-    default:0.15,dst:0.03
-  },
-  amazon_fr:{
-    default:0.15,escalonado:true,
-    umbral:200,tramo1:0.15,
-    tramo2:0.10,dst:0.03
-  },
-  amazon_de:{
-    default:0.15,escalonado:true,
-    umbral:200,tramo1:0.15,
-    tramo2:0.10,dst:0.03
-  },
-  amazon_uk:{
-    default:0.15,escalonado:true,
-    umbral:175,tramo1:0.15,
-    tramo2:0.10,dst:0.03,
-    moneda:'GBP'
-  },
-  makro:{default:0.12},
-  leroy:{default:0.195},
-  brico:{default:0.13},
-  manomano:{default:0.15},
-  bol:{default:0.15},
-  wayfair:{default:0.15},
-  octopia:{default:0.15},
-  shopify:{default:0.03},
-  otro:{default:0.10}
-};
-
-// Cuotas fijas mensuales por marketplace
-const CUOTAS_FIJAS={
-  leroy:39.00,
-  brico:39.99,
-};
-
-// IVA real por marketplace/país verificado
-const IVA_RATES={
-  amazon_es:0.21,
-  amazon_it:0.22,
-  amazon_pt:0.23,
-  amazon_fr:0.20,
-  amazon_de:0.19,
-  amazon_uk:0.20,
-  makro:0.21,
-  leroy:0.21,
-  brico:0.21,
-  manomano:0.21,
-  bol:0.21,
-  wayfair:0.21,
-  octopia:0.21,
-  shopify:0.21,
-  otro:0.21
-};
-
-// ============ TARIFAS BRT ITALIA — Contratto firmato 17.06.2026 (val. 01.06–31.12.2026) ============
-// Cliente HALNIX LTD cod. 0598318, filiale Treviso. Sustituye a TNT (colli) y One Express (pallet).
-// ⚠️ PUNTOS PROVISIONALES — pendientes de confirmación ESCRITA de Davide Salvadori (ver Email_BRT_Davide):
-//   1. Fuori misura pallet: contrato = €10/collo para base >160cm (n.pallet 170cm). Davide (email) = incluido en €46.
-//      Versión CONSERVADORA cargada aquí: SÍ se cobra (+€10). Si Davide confirma que no → poner BRT_PALLET.fuoriMisura=0.
-//   2. €46 pallet: solo en email de Davide, no en el contrato firmado. Precio pallet islas: DESCONOCIDO.
-//   3. "Colli incompatibili" +€1/kg podría aplicar a cajas de 171cm. Por defecto OFF. Si BRT lo aplica → BRT_INCOMPATIBILE_ON=true.
-const BRT_COLLI={           // base "a spedizione" por banda de peso tasable (kg), sin fuel
-  italia:[[5,6.00],[10,8.20],[20,11.00],[50,13.00],[100,20.00]],
-  isole: [[5,7.00],[10,8.50],[20,13.00],[50,15.00],[100,21.00]]  // Calabria / Sicilia / Sardegna
-};
-const BRT_PALLET={ base:46.00, fuoriMisura:10.00 };   // €46 nacional + €10 fuori misura (base >160cm)
-const BRT_FUEL=0.07;             // fuel surcharge mínimo 7% sul trasporto
-const BRT_APPUNTAMENTO=3.50;     // consegna su appuntamento B2C (a spedizione)
-const BRT_TRAGHETTI=0.05;        // €/kg Sicilia/Sardegna
-const BRT_TRAGHETTI_MIN=1.00;    // mínimo traghetti
-const BRT_INCOMPATIBILE=1.00;    // €/kg (banda 1–50kg) — PROVISIONAL
-const BRT_INCOMPATIBILE_ON=false;
-const BRT_ISLAND_REGIONS=['SICILIA','SARDEGNA','CALABRIA'];
-// Zonas especiales BRT (isole minori / zone franche) — suplemento A Q.LE (por 100kg tasable, mín 1 q.le)
-const BRT_ZONAS_ESPECIALES={
-  isole_minori:{sup:8.00},
-  livigno:     {sup:20.00, aduanas:true},
-  campione:    {sup:30.00}
-};
-
-// Peso tasable BRT: mayor entre peso real y volumétrico (200 kg/m³), redondeado arriba de 10 en 10.
-function brtTaxWeight(s){
-  let vol=0;
-  if(s.dim){ vol=(s.dim[0]/100)*(s.dim[1]/100)*(s.dim[2]/100)*200; }
-  const w=Math.max(s.peso,vol);
-  return Math.ceil(w/10)*10;
-}
-function brtBand(tw,bands){
-  for(const [lim,price] of bands){ if(tw<=lim) return price; }
-  return bands[bands.length-1][1];   // >100kg va a quintale; no aplica a unidades sueltas
-}
-
-// ============ TARIFAS UK — Mintsoft (PROVISIONAL, pendiente cotización ampliada) ============
-// ⚠️ TODO el catálogo es OOG (cajas 171cm). Los servicios OOG están capados en 30kg → solo EMD.001 (20kg)
-// tiene tarifa OOG firme. Para >30kg el único servicio localizado es DPD Freight Offshore £17.29 (0–99kg),
-// PENDIENTE de que Mintsoft confirme que acepta 171cm. Mainland >30kg: APC £16.76. Irlanda >30kg: SIN cobertura.
-// Valores en £ (la calculadora los mostrará con símbolo € — pendiente de decidir conversión). Revisar tras Mintsoft.
-const UK_TARIFAS={
-  mainland:  16.76,   // APC >30kg (EMD.001 OOG mainland sería £14.28)
-  highlands: 17.29,   // DPD Freight Offshore
-  nireland:  17.29,
-  channel:   17.29,
-  isleman:   17.29,
-  ireland:   14.81    // DPD European Road — ⚠️ capado 30kg, provisional
-};
-
-const LANDED=1.35,TC=0.92;
-let tipo='retraso',resolucion='reenvio',cliente='b2b',devActiva=false,devCanal='amazon',lineaCount=0,resLineas=[];
-
-const fmt=n=>n.toFixed(2).replace('.',',')+' €';
-
-function addLinea(){
-  lineaCount++;
-  const id=lineaCount;
-  const div=document.createElement('div');
-  div.className='linea-pedido';div.id='linea-'+id;
-  div.innerHTML=`
-    <div class="linea-header">
-      <span class="linea-num">Modelo ${id}</span>
-      ${id>1?`<button class="linea-delete" onclick="removeLinea(${id})">✕ Eliminar</button>`:''}
-    </div>
-    <div class="linea-grid">
-      <div class="linea-field">
-        <label>SKU / Modelo</label>
-        <select id="sku-${id}" onchange="autoFOB(${id})">
-          <option value="">Seleccionar...</option>
-          <option value="EMD001">EMD.001 — 4P Slim (20,1 kg)</option>
-          <option value="SYN007">SYN.007 — 2P (33,15 kg)</option>
-          <option value="SYN010">SYN.010 — 4P (36,1 kg)</option>
-          <option value="SYN011">SYN.011 — 6P Palet (49,65 kg)</option>
-          <option value="EMD003">EMD.003 — 12P Palet (50,85 kg)</option>
-        </select>
-      </div>
-      <div class="linea-field">
-        <label>Uds.</label>
-        <input type="number" id="uds-${id}" value="1" min="1" oninput="updatePreview(${id})">
-      </div>
-      <div class="linea-field">
-        <label>FOB (€/ud)</label>
-        <input type="number" id="fob-${id}" placeholder="0.00" step="0.01">
-      </div>
-    </div>
-    <div class="linea-pvp">
-      <div class="linea-field">
-        <label>PVP ud. (€ con IVA)</label>
-        <input type="number" id="pvp-${id}" placeholder="0.00" step="0.01">
-      </div>
-      <div class="linea-field lcttm-preview" id="lp-${id}">LCTTM: —</div>
-    </div>`;
-  document.getElementById('lineas-container').appendChild(div);
-}
-
-function removeLinea(id){document.getElementById('linea-'+id).remove();}
-
-function autoFOB(id){
-  const k=document.getElementById('sku-'+id).value;
-  if(k&&SKUS[k])document.getElementById('fob-'+id).value=(SKUS[k].fob*TC).toFixed(2);
-  updatePreview(id);
-}
-
-function updatePreview(id){
-  const k=document.getElementById('sku-'+id).value;
-  const u=parseInt(document.getElementById('uds-'+id).value)||1;
-  if(k&&SKUS[k])document.getElementById('lp-'+id).textContent='LCTTM: '+fmt(SKUS[k].peso*6.67*u);
-}
-
-function setTipo(t){tipo=t;document.querySelectorAll('#tipo-row .toggle-btn').forEach(b=>b.classList.toggle('active',(t==='retraso'&&b.textContent.includes('Retraso'))||(t==='dano'&&b.textContent.includes('Daño'))||(t==='perdida'&&b.textContent.includes('Pérdida'))||(t==='defecto'&&b.textContent.includes('Defecto'))));}
-function setResolucion(r){resolucion=r;document.querySelectorAll('#resolucion-row .toggle-btn').forEach(b=>b.classList.toggle('active',(r==='reenvio'&&b.textContent.includes('Reenvío'))||(r==='reembolso'&&b.textContent.includes('Reembolso'))||(r==='sin_accion'&&b.textContent.includes('Sin acción'))));document.getElementById('slider-reembolso').style.display=r==='reembolso'?'block':'none';}
-function setCliente(c){cliente=c;document.querySelectorAll('#cliente-row .toggle-btn').forEach(b=>b.classList.toggle('active',(c==='b2c'&&b.textContent.includes('B2C'))||(c==='b2b'&&b.textContent.includes('B2B'))));}
-function toggleDevolucion(){devActiva=!devActiva;document.getElementById('toggle-devolucion').classList.toggle('active',devActiva);document.getElementById('devolucion-options').style.display=devActiva?'block':'none';}
-function setDevolucionCanal(c){devCanal=c;document.querySelectorAll('#devolucion-canal-row .toggle-btn').forEach(b=>b.classList.toggle('active',(c==='amazon'&&b.textContent.includes('Amazon'))||(c==='ontime'&&b.textContent.includes('Ontime'))||(c==='cliente'&&b.textContent.includes('cliente'))));}
-
-function costeEtiqueta(skuKey){
-  if(devCanal==='cliente')return 0;
-  if(devCanal==='amazon')return SKUS[skuKey]?.factor50?11.00:8.50;
-  const prov=parseFloat(document.getElementById('provincia').value)||11.58;
-  return SKUS[skuKey]?.factor50?prov*1.18:prov;
-}
-
-// Calcula comisión real con escalonado y DST
-function calcComision(mp, sku, precio){
-  const c=COMISIONES[mp]||COMISIONES.otro;
-  let comBase;
-  if(c.escalonado && precio){
-    const umbral=c.umbral||200;
-    if(precio<=umbral){
-      comBase=c.tramo1||0.15;
-    } else {
-      // Comisión ponderada
-      const parte1=umbral*(c.tramo1||0.15);
-      const parte2=(precio-umbral)*(c.tramo2||0.10);
-      comBase=(parte1+parte2)/precio;
-    }
-  } else {
-    comBase=c[sku]||c.default||0.15;
-  }
-  const dst=c.dst||0;
-  return comBase+(comBase*dst);
-}
-
-function calcular(){
-  const mp=document.getElementById('marketplace').value;
-  const prov=parseFloat(document.getElementById('provincia').value);
-  const flete=parseFloat(document.getElementById('flete').value)||8.80;
-  const pct=parseInt(document.getElementById('pct-reembolso').value)/100;
-  const iva=IVA_RATES[mp]||.21;
-  const mpComisiones=COMISIONES[mp]||{default:0.15};
-
-  if(!mp||isNaN(prov)){alert('Completa Marketplace y Provincia.');return;}
-
-  const lineas=document.querySelectorAll('.linea-pedido');
-  if(!lineas.length){alert('Añade al menos un modelo.');return;}
-
-  let tProd=0,tEnvio=0,tLCTTM=0,tPVP=0,tComision=0;
-let lcttm=0,lcttmLabel='',lcttmShow=false;
-  resLineas=[];
-
-  for(const l of lineas){
-    const id=l.id.replace('linea-','');
-    const k=document.getElementById('sku-'+id)?.value;
-    const u=parseInt(document.getElementById('uds-'+id)?.value)||1;
-    const fob=parseFloat(document.getElementById('fob-'+id)?.value)||0;
-    const pvpB=parseFloat(document.getElementById('pvp-'+id)?.value)||0;
-    if(!k)continue;
-    const s=SKUS[k];
-    const pvpN=cliente==='b2b'?pvpB/(1+iva):pvpB;
-
-    // Tarifa de envío — BRT si destino Italia, Mintsoft si Reino Unido, sino Ontime (ES/PT)
-    let tarifa;
-    const destSel=document.getElementById('provincia');
-    const destText=destSel.options[destSel.selectedIndex]?.text||'';
-    const esIT=(mp==='amazon_it')||(prov===0&&destText.includes('Italia'));
-    const esUK=destText.includes('Reino Unido');
-
-    if(esIT){
-      const reg=window._regionIT;
-      const island=reg&&BRT_ISLAND_REGIONS.includes(reg);
-      if(k==='SYN011'||k==='EMD003'){
-        // PALLET BRT: €46 nacional + fuel + €10 fuori misura (base 170cm > 160cm)
-        tarifa=BRT_PALLET.base*(1+BRT_FUEL)+BRT_PALLET.fuoriMisura;
-        if(island) window._brtPalletIslandPending=true;  // precio pallet islas desconocido
-      } else {
-        // COLLI BRT: banda por peso tasable + fuel (+ traghetti islas)
-        const tw=brtTaxWeight(s);
-        const base=brtBand(tw, island?BRT_COLLI.isole:BRT_COLLI.italia);
-        tarifa=base*(1+BRT_FUEL);
-        if(island) tarifa+=Math.max(BRT_TRAGHETTI_MIN, s.peso*BRT_TRAGHETTI);
-        if(BRT_INCOMPATIBILE_ON) tarifa+=s.peso*BRT_INCOMPATIBILE;
-      }
-      // Consegna su appuntamento (B2C)
-      if(cliente==='b2c') tarifa+=BRT_APPUNTAMENTO;
-      // Zona especial BRT (isole minori / Livigno / Campione) — por quintale
-      if(window._zonaEspIT&&BRT_ZONAS_ESPECIALES[window._zonaEspIT]){
-        const z=BRT_ZONAS_ESPECIALES[window._zonaEspIT];
-        const q=Math.max(1,Math.ceil(brtTaxWeight(s)/100));
-        tarifa+=z.sup*q;
-      }
-    } else if(esUK){
-      const zu=window._zonaUK||'mainland';
-      tarifa=UK_TARIFAS[zu]!==undefined?UK_TARIFAS[zu]:UK_TARIFAS.mainland;
-    } else {
-      tarifa=s.factor50?prov*1.18:prov;
-    }
-
-    // Comisión real por SKU
-    const comRate=mpComisiones[k]!==undefined?mpComisiones[k]:mpComisiones.default;
-    const comLinea=pvpN*comRate;
-
-    const prod=(fob+flete)*LANDED;
-    if(mp==='amazon_es'||mp==='amazon_pt'){lcttm=s.peso*6.67*u;lcttmLabel='Cap LCTTM reclamable (art. 57.1)';lcttmShow=true;}
-else if(mp==='amazon_it'){lcttm=s.peso*6.20*u;lcttmLabel='Cap reclamable BRT (assicurazione AC BASE €6,20/kg — requiere mandato)';lcttmShow=true;}
-else if(mp==='amazon_fr'){lcttm=s.peso*10.00*u;lcttmLabel='Cap reclamable DHL FR (CMR ~8.33 SDR/kg)';lcttmShow=true;}
-else if(mp==='amazon_uk'){lcttm=50.00*u;lcttmLabel='Cap reclamable DPD UK (estándar £50/paquete — verificar cobertura extendida)';lcttmShow=true;}
-else{lcttm=0;lcttmLabel='Cap reclamable: pendiente de definir';lcttmShow=false;}
-    tProd+=prod*u;tEnvio+=tarifa*u;tLCTTM+=lcttm;tPVP+=pvpN*u;tComision+=comLinea*u;
-    resLineas.push({nombre:s.nombre,u,pvpN:pvpN*u,prod:prod*u,envio:tarifa*u,lcttm,comRate});
-  }
-
-  if(!resLineas.length){alert('Completa al menos un SKU.');return;}
-
-  const comisionTotal=tComision;
-  let reenvio=0,reembolso=0,prodReenvio=0,devTotal=0;
-  if(resolucion==='reenvio'){reenvio=tEnvio;prodReenvio=tProd;}
-  else if(resolucion==='reembolso'){reembolso=tPVP*pct;}
-  if(devActiva){
-    for(const l of document.querySelectorAll('.linea-pedido')){
-      const id=l.id.replace('linea-','');
-      const k=document.getElementById('sku-'+id)?.value;
-      const u=parseInt(document.getElementById('uds-'+id)?.value)||1;
-      if(k)devTotal+=costeEtiqueta(k)*u;
-    }
-  }
-
-  const total=tEnvio+reenvio+prodReenvio+reembolso+comisionTotal+devTotal;
-  const neto=Math.max(0,total-tLCTTM);
-
-  const resEl=document.getElementById('lineas-resumen');
-  resEl.innerHTML='<div style="font-size:10px;font-family:DM Mono,monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Líneas del pedido</div>';
-  resLineas.forEach(l=>resEl.innerHTML+=`<div class="linea-resumen-row"><span>${l.nombre} × ${l.u} ud.</span><span>PVP ${fmt(l.pvpN)} | Com. ${(l.comRate*100).toFixed(1)}% | LCTTM ${fmt(l.lcttm)}</span></div>`);
-
-  document.getElementById('r-coste-producto').textContent=fmt(tProd);
-  document.getElementById('r-envio').textContent=fmt(tEnvio);
-  document.getElementById('r-comision').textContent=fmt(comisionTotal);
-  document.getElementById('r-total').textContent=fmt(total);
-  const rowLcttm=document.getElementById('row-lcttm');
-const lblLcttm=document.getElementById('r-lcttm-label');
-const valLcttm=document.getElementById('r-lcttm');
-if(lcttmShow&&tLCTTM>0){if(rowLcttm)rowLcttm.style.display='flex';if(lblLcttm)lblLcttm.textContent=resLineas[0]?lcttmLabel:'';valLcttm.textContent=fmt(tLCTTM);}else{if(rowLcttm)rowLcttm.style.display='flex';if(lblLcttm)lblLcttm.textContent=lcttmLabel||'Cap reclamable: pendiente de definir';valLcttm.textContent=lcttmShow?fmt(tLCTTM):'—';}
-  const nEl=document.getElementById('r-neto');
-  nEl.textContent=fmt(neto);
-  nEl.className='result-value '+(neto<total*.3?'positive':neto<total*.6?'warning':'negative');
-  document.getElementById('row-reenvio-envio').style.display=resolucion==='reenvio'?'flex':'none';
-  document.getElementById('r-reenvio-envio').textContent=fmt(reenvio);
-  document.getElementById('row-reenvio-producto').style.display=resolucion==='reenvio'?'flex':'none';
-  document.getElementById('r-reenvio-producto').textContent=fmt(prodReenvio);
-  document.getElementById('row-reembolso').style.display=resolucion==='reembolso'?'flex':'none';
-  document.getElementById('r-reembolso').textContent=fmt(reembolso)+(pct<1?' ('+Math.round(pct*100)+'%)':'');
-  document.getElementById('row-devolucion').style.display=devActiva?'flex':'none';
-  document.getElementById('r-devolucion').textContent=fmt(devTotal);
-  // Cuota fija marketplace
-  const cuota=CUOTAS_FIJAS[mp]||0;
-  document.getElementById('row-cuota').style.display=cuota>0?'flex':'none';
-  document.getElementById('r-cuota').textContent=cuota>0?fmt(cuota)+' (informativo)':'—';
-  document.getElementById('t-responsable').textContent=document.getElementById('responsable').value.toUpperCase();
-  document.getElementById('t-tipo').textContent=tipo.toUpperCase();
-  document.getElementById('t-resolucion').textContent=resolucion.toUpperCase();
-  document.getElementById('t-cliente').textContent=cliente.toUpperCase();
-  document.getElementById('results').classList.add('show');
-  document.getElementById('copy-btn').style.display='flex';
-  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function copiarClickUp(){
-  const lines=['=== COSTE INCIDENCIA ATC ===','Tipo: '+tipo.toUpperCase(),'Resolución: '+resolucion.toUpperCase(),'Responsable: '+document.getElementById('responsable').value.toUpperCase(),'Cliente: '+cliente.toUpperCase(),'---','LÍNEAS DEL PEDIDO:'];
-  resLineas.forEach(l=>lines.push(`  ${l.nombre} × ${l.u} ud. | PVP ${fmt(l.pvpN)} | LCTTM ${fmt(l.lcttm)}`));
-  lines.push('---','Coste producto(s): '+document.getElementById('r-coste-producto').textContent,'Coste envío original: '+document.getElementById('r-envio').textContent);
-  if(resolucion==='reenvio'){
-    lines.push('Coste envío reenvío: '+document.getElementById('r-reenvio-envio').textContent);
-    lines.push('Coste producto reenvío: '+document.getElementById('r-reenvio-producto').textContent);
-  }
-  if(resolucion==='reembolso')lines.push('Reembolso cliente: '+document.getElementById('r-reembolso').textContent);
-  if(devActiva)lines.push('Etiqueta devolución: '+document.getElementById('r-devolucion').textContent);
-  lines.push('Comisión marketplace: '+document.getElementById('r-comision').textContent,'---','COSTE TOTAL: '+document.getElementById('r-total').textContent,'Cap LCTTM reclamable: '+document.getElementById('r-lcttm').textContent,'COSTE NETO tras reclamación: '+document.getElementById('r-neto').textContent);
-  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
-    const b=document.getElementById('copy-btn');b.textContent='✓ Copiado';
-    setTimeout(()=>{b.innerHTML='📋 Copiar resumen para ClickUp';},2000);
-  });
-}
-
-addLinea();setResolucion('reenvio');setCliente('b2b');
-</script>
-</body>
-</html>
